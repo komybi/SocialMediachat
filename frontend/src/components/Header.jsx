@@ -58,11 +58,11 @@ const Header = () => {
 	useEffect(() => {
 		if (user) {
 			if (pathname === "/signin" || pathname === "/signup") {
-				navigate("/");
+				navigate("/home");
 			}
-		} else if (pathname !== "/signin" && pathname !== "/signup") {
-			navigate("/signin");
 		}
+		// Remove the automatic redirect to signin for non-authenticated users
+		// Let them explore the landing page first
 		handleScrollTop();
 	}, [pathname, user]);
 
@@ -121,13 +121,13 @@ const Header = () => {
 			<div className="flex items-center justify-start gap-2">
 				<Link to={"/"}>
 					<img
-						src={Logo}
-						alt="ChatApp"
+						src="/logo.jpeg"
+						alt="BHULink"
 						className="h-12 w-12 rounded-tr-full rounded-tl-full rounded-br-full"
 					/>
 				</Link>
 				<Link to={"/"}>
-					<span>ChatApp</span>
+					<span>BHULink</span>
 				</Link>
 			</div>
 			{user && (

@@ -143,7 +143,7 @@ const Home = () => {
 			) : (
 				<div className="w-full h-[80vh] bg-black/40 flex items-center justify-center">
 					<div className="text-center text-white">
-						<h2 className="text-2xl mb-4">Welcome to ChatApp</h2>
+						<h2 className="text-2xl mb-4">Welcome to BHULink</h2>
 						<p className="mb-4">Please sign in to start chatting and posting.</p>
 						<Link to="/signin" className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
 							Sign In
