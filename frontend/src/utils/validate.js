@@ -11,18 +11,24 @@ export const checkValidSignInFrom = (email, password) => {
 	if (!isPasswordValid) return "Invalid password";
 	return null;
 };
-export const checkValidSignUpFrom = (firstName, lastName, email, password) => {
-	const isFirstValid = /\b([A-ZÀ-ÿ][-,a-z. ']+[ ]*)+/.test(firstName);
-	const isLastValid = /\b([A-ZÀ-ÿ][-,a-z. ']+[ ]*)+/.test(lastName);
+export const checkValidSignUpFrom = (firstName, lastName, email, password, role) => {
+	const trimmedFirst = firstName.trim();
+	const trimmedLast = lastName.trim();
+	const isFirstValid = /^[a-zA-ZÀ-ÿ][a-zA-ZÀ-ÿ .'-]{1,49}$/.test(trimmedFirst);
+	const isLastValid = /^[a-zA-ZÀ-ÿ][a-zA-ZÀ-ÿ .'-]{1,49}$/.test(trimmedLast);
 	const isEmailValid = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(
 		email
 	);
-	if (!isFirstValid) return "Invalid FirstName Format";
-	if (!isLastValid) return "Invalid LastName Format";
+	const validRoles = ["user", "admin", "moderator"];
+	const isRoleValid = role && validRoles.includes(role);
+
+	if (!isFirstValid) return "Invalid first name format";
+	if (!isLastValid) return "Invalid last name format";
 	if (!isEmailValid) return "Invalid email format";
+	if (!isRoleValid) return "Invalid role selection";
 	if (password.length < 8) return "Min 8 characters";
 	if (!/[a-z]/.test(password)) return "Needs 1 lowercase letter";
-	if (!/[A-Z]/.test(password)) return "Needs 1 uppercase lette";
+	if (!/[A-Z]/.test(password)) return "Needs 1 uppercase letter";
 	if (!/\d/.test(password)) return "Needs 1 number";
 	if (!/[^((0-9)|(a-z)|(A-Z)|\s)]/.test(password))
 		return "Needs 1 special char";

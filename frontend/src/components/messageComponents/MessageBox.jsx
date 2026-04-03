@@ -32,6 +32,11 @@ const MessageBox = ({ chatId }) => {
 
 	useEffect(() => {
 		const getMessage = (chatId) => {
+			if (!chatId) {
+				dispatch(addAllMessages([]));
+				dispatch(setMessageLoading(false));
+				return;
+			}
 			dispatch(setMessageLoading(true));
 			const token = localStorage.getItem("token");
 			fetch(`${import.meta.env.VITE_BACKEND_URL}/api/message/${chatId}`, {

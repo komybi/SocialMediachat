@@ -10,7 +10,7 @@ const PostItem = ({ post, onUpdate }) => {
 
     const handleLike = async () => {
         try {
-            const response = await fetch(`http://localhost:9001/api/post/${post._id}/like`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${post._id}/like`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -31,7 +31,7 @@ const PostItem = ({ post, onUpdate }) => {
         if (!comment.trim()) return;
 
         try {
-            const response = await fetch(`http://localhost:9001/api/post/${post._id}/comment`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${post._id}/comment`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -72,7 +72,7 @@ const PostItem = ({ post, onUpdate }) => {
                     <div className="flex items-center">
                         <div className="relative">
                             <img
-                                src={post.user.image ? `http://localhost:9001/${post.user.image}` : '/boy.png'}
+                                src={post.user.image ? `${import.meta.env.VITE_BACKEND_URL}/${post.user.image}` : '/boy.png'}
                                 alt={post.user.firstName}
                                 className="w-12 h-12 rounded-full border-2 border-gray-200 mr-3"
                             />
@@ -104,7 +104,7 @@ const PostItem = ({ post, onUpdate }) => {
                     {console.log("Rendering media:", post.media || post.image)}
                     {(post.media?.type === 'image' || post.image) ? (
                         <img 
-                            src={`http://localhost:9001/${post.media?.url || post.image}`} 
+                            src={`${import.meta.env.VITE_BACKEND_URL}/${post.media?.url || post.image}`} 
                             alt="Post" 
                             className="w-full object-cover"
                             loading="lazy"
@@ -112,10 +112,10 @@ const PostItem = ({ post, onUpdate }) => {
                     ) : (
                         <div className="relative">
                             <video 
-                                src={`http://localhost:9001/${post.media.url}`} 
+                                src={`${import.meta.env.VITE_BACKEND_URL}/${post.media.url}`} 
                                 controls 
                                 className="w-full max-h-96 object-cover rounded-lg"
-                                poster={`http://localhost:9001/${post.media.url}`}
+                                poster={`${import.meta.env.VITE_BACKEND_URL}/${post.media.url}`}
                             />
                             <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
                                 <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -173,7 +173,7 @@ const PostItem = ({ post, onUpdate }) => {
                     <div className="border-t pt-3 space-y-3">
                         <div className="flex space-x-2">
                             <img
-                                src={authUser?.image ? `http://localhost:9001/${authUser.image}` : '/boy.png'}
+                                src={authUser?.image ? `${import.meta.env.VITE_BACKEND_URL}/${authUser.image}` : '/boy.png'}
                                 alt={authUser?.firstName}
                                 className="w-8 h-8 rounded-full"
                             />
@@ -198,7 +198,7 @@ const PostItem = ({ post, onUpdate }) => {
                             {post.comments.map((cmt, index) => (
                                 <div key={index} className="flex space-x-2">
                                     <img
-                                        src={cmt.user.image ? `http://localhost:9001/${cmt.user.image}` : '/boy.png'}
+                                        src={cmt.user.image ? `${import.meta.env.VITE_BACKEND_URL}/${cmt.user.image}` : '/boy.png'}
                                         alt={cmt.user.firstName}
                                         className="w-8 h-8 rounded-full"
                                     />
@@ -227,3 +227,6 @@ const PostItem = ({ post, onUpdate }) => {
 };
 
 export default PostItem;
+
+
+

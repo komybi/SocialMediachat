@@ -1,8 +1,11 @@
 const dotenv = require("dotenv");
-dotenv.config();
+const path = require("path");
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const { Server } = require("socket.io");
 
 const app = express();
 
@@ -26,14 +29,128 @@ const chatRouter = require("./routes/chat");
 const messageRouter = require("./routes/message");
 const postRouter = require("./routes/post");
 
-// Connect to Database
-main()
-	.then(() => console.log("Database Connection established"))
-	.catch((err) => console.log(err));
+// Connect to Database and start server
+const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/chat-app";
 
-async function main() {
-	await mongoose.connect(process.env.MONGODB_URI);
+async function startServer() {
+	try {
+		await mongoose.connect(mongoUri);
+		console.log("Database Connection established");
+
+		const server = app.listen(PORT);
+
+		server.on("listening", () => {
+			console.log(`Server listening on ${PORT}`);
+
+			// Socket.IO setup
+			const io = new Server(server, {
+				pingTimeout: 60000,
+				transports: ["websocket"],
+				cors: corsOptions,
+			});
+
+			io.on("connection", (socket) => {
+				console.log("Connected to socket.io:", socket.id);
+
+				const setupHandler = (userId) => {
+					if (!socket.hasJoined) {
+						socket.join(userId);
+						socket.hasJoined = true;
+						console.log("User joined:", userId);
+						socket.emit("connected");
+					}
+				};
+
+				const newMessageHandler = (newMessageReceived) => {
+					let chat = newMessageReceived?.chat;
+					chat?.users.forEach((user) => {
+						if (user._id === newMessageReceived.sender._id) return;
+						console.log("Message received by:", user._id);
+						socket.in(user._id).emit("message received", newMessageReceived);
+					});
+				};
+
+				const joinChatHandler = (room) => {
+					if (socket.currentRoom) {
+						if (socket.currentRoom === room) {
+							console.log(`User already in Room: ${room}`);
+							return;
+						}
+						socket.leave(socket.currentRoom);
+						console.log(`User left Room: ${socket.currentRoom}`);
+					}
+					socket.join(room);
+					socket.currentRoom = room;
+					console.log("User joined Room:", room);
+				};
+
+				const typingHandler = (room) => {
+					socket.in(room).emit("typing");
+				};
+
+				const stopTypingHandler = (room) => {
+					socket.in(room).emit("stop typing");
+				};
+
+				const clearChatHandler = (chatId) => {
+					socket.in(chatId).emit("clear chat", chatId);
+				};
+
+				const deleteChatHandler = (chat, authUserId) => {
+					chat.users.forEach((user) => {
+						if (authUserId === user._id) return;
+						console.log("Chat delete:", user._id);
+						socket.in(user._id).emit("delete chat", chat._id);
+					});
+				};
+
+				const chatCreateChatHandler = (chat, authUserId) => {
+					chat.users.forEach((user) => {
+						if (authUserId === user._id) return;
+						console.log("Create chat:", user._id);
+						socket.in(user._id).emit("chat created", chat);
+					});
+				};
+
+				socket.on("setup", setupHandler);
+				socket.on("new message", newMessageHandler);
+				socket.on("join chat", joinChatHandler);
+				socket.on("typing", typingHandler);
+				socket.on("stop typing", stopTypingHandler);
+				socket.on("clear chat", clearChatHandler);
+				socket.on("delete chat", deleteChatHandler);
+				socket.on("chat created", chatCreateChatHandler);
+
+				socket.on("disconnect", () => {
+					console.log("User disconnected:", socket.id);
+					socket.off("setup", setupHandler);
+					socket.off("new message", newMessageHandler);
+					socket.off("join chat", joinChatHandler);
+					socket.off("typing", typingHandler);
+					socket.off("stop typing", stopTypingHandler);
+					socket.off("clear chat", clearChatHandler);
+					socket.off("delete chat", deleteChatHandler);
+					socket.off("chat created", chatCreateChatHandler);
+				});
+			});
+		});
+
+		server.on("error", (err) => {
+			if (err.code === "EADDRINUSE") {
+				console.error(`Port ${PORT} is already in use. Please stop the process using this port or choose another.`);
+				process.exit(1);
+			} else {
+				console.error("Server error:", err);
+				process.exit(1);
+			}
+		});
+	} catch (err) {
+		console.error("Database connection error:", err);
+		process.exit(1);
+	}
 }
+
+startServer();
 
 // Root route
 app.get("/", (req, res) => {
@@ -59,101 +176,4 @@ app.all("*", (req, res) => {
 app.use((err, req, res, next) => {
 	const errorMessage = err.message || "Something Went Wrong!";
 	res.status(500).json({ message: errorMessage });
-});
-
-// Start the server
-const server = app.listen(PORT, async () => {
-	console.log(`Server listening on ${PORT}`);
-});
-
-// Socket.IO setup
-const { Server } = require("socket.io");
-const io = new Server(server, {
-	pingTimeout: 60000,
-	transports: ["websocket"],
-	cors: corsOptions,
-});
-
-// Socket connection
-io.on("connection", (socket) => {
-	console.log("Connected to socket.io:", socket.id);
-
-	// Join user and message send to client
-	const setupHandler = (userId) => {
-		if (!socket.hasJoined) {
-			socket.join(userId);
-			socket.hasJoined = true;
-			console.log("User joined:", userId);
-			socket.emit("connected");
-		}
-	};
-	const newMessageHandler = (newMessageReceived) => {
-		let chat = newMessageReceived?.chat;
-		chat?.users.forEach((user) => {
-			if (user._id === newMessageReceived.sender._id) return;
-			console.log("Message received by:", user._id);
-			socket.in(user._id).emit("message received", newMessageReceived);
-		});
-	};
-
-	// Join a Chat Room and Typing effect
-	const joinChatHandler = (room) => {
-		if (socket.currentRoom) {
-			if (socket.currentRoom === room) {
-				console.log(`User already in Room: ${room}`);
-				return;
-			}
-			socket.leave(socket.currentRoom);
-			console.log(`User left Room: ${socket.currentRoom}`);
-		}
-		socket.join(room);
-		socket.currentRoom = room;
-		console.log("User joined Room:", room);
-	};
-	const typingHandler = (room) => {
-		socket.in(room).emit("typing");
-	};
-	const stopTypingHandler = (room) => {
-		socket.in(room).emit("stop typing");
-	};
-
-	// Clear, Delete and Create chat handlers
-	const clearChatHandler = (chatId) => {
-		socket.in(chatId).emit("clear chat", chatId);
-	};
-	const deleteChatHandler = (chat, authUserId) => {
-		chat.users.forEach((user) => {
-			if (authUserId === user._id) return;
-			console.log("Chat delete:", user._id);
-			socket.in(user._id).emit("delete chat", chat._id);
-		});
-	};
-	const chatCreateChatHandler = (chat, authUserId) => {
-		chat.users.forEach((user) => {
-			if (authUserId === user._id) return;
-			console.log("Create chat:", user._id);
-			socket.in(user._id).emit("chat created", chat);
-		});
-	};
-
-	socket.on("setup", setupHandler);
-	socket.on("new message", newMessageHandler);
-	socket.on("join chat", joinChatHandler);
-	socket.on("typing", typingHandler);
-	socket.on("stop typing", stopTypingHandler);
-	socket.on("clear chat", clearChatHandler);
-	socket.on("delete chat", deleteChatHandler);
-	socket.on("chat created", chatCreateChatHandler);
-
-	socket.on("disconnect", () => {
-		console.log("User disconnected:", socket.id);
-		socket.off("setup", setupHandler);
-		socket.off("new message", newMessageHandler);
-		socket.off("join chat", joinChatHandler);
-		socket.off("typing", typingHandler);
-		socket.off("stop typing", stopTypingHandler);
-		socket.off("clear chat", clearChatHandler);
-		socket.off("delete chat", deleteChatHandler);
-		socket.off("chat created", chatCreateChatHandler);
-	});
 });

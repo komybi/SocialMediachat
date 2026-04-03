@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const { generateToken } = require("../config/jwtProvider");
 
 const registerUser = async (req, res, next) => {
-	let { firstName, lastName, email, password } = req.body;
+	let { firstName, lastName, email, password, role = "user" } = req.body;
 	const existingUser = await User.findOne({ email: email });
 	if (existingUser) {
 		return res.status(400).json({ message: `User Already Exist` });
@@ -14,11 +14,14 @@ const registerUser = async (req, res, next) => {
 		lastName,
 		email,
 		password,
+		role,
 	});
 	const user = await userData.save();
 	const jwt = generateToken(user._id);
+	user.password = null;
 	res.status(200).json({
 		message: "Registration Successfully",
+		data: user,
 		token: jwt,
 	});
 };

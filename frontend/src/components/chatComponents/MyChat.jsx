@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { FaPenAlt } from "react-icons/fa";
 import { addMyChat, addSelectedChat } from "../../redux/slices/myChatSlice";
+import { addAllMessages } from "../../redux/slices/messageSlice";
 import { useDispatch, useSelector } from "react-redux";
 import {
     setChatLoading,
@@ -46,6 +47,23 @@ const MyChat = () => {
         };
         getMyChat();
     }, [newMessageId, isGroupChatId]);
+
+    const getChatHistory = async (chatId) => {
+        if (!chatId) return;
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/message/${chatId}`, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const data = await response.json();
+            dispatch(addAllMessages(data?.data || []));
+        } catch (error) {
+            console.error("Failed to load chat history:", error);
+        }
+    };
     return (
         <>
             <div className="p-6 w-full h-[7vh] font-semibold flex justify-between items-center bg-slate-800 text-white border-slate-500 border-r">
@@ -84,6 +102,7 @@ const MyChat = () => {
                                     }`}
                                     onClick={() => {
                                         dispatch(addSelectedChat(chat));
+                                        getChatHistory(chat?._id);
                                     }}
                                 >
                                     <img

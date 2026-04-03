@@ -29,7 +29,7 @@ const Header = () => {
 	const token = localStorage.getItem("token");
 	const getAuthUser = (token) => {
 		dispatch(setLoading(true));
-		fetch(`http://localhost:9001/api/user/profile`, {
+		fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/profile`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
@@ -218,3 +218,6 @@ const Header = () => {
 };
 
 export default Header;
+
+
+

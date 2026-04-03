@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { addFollowing, removeFollowing } from "../redux/slices/authSlice";
+import { addNewChat, addSelectedChat } from "../redux/slices/myChatSlice";
 
 const UserSuggestions = () => {
 	const [users, setUsers] = useState([]);
@@ -27,6 +28,7 @@ const UserSuggestions = () => {
 			}
 		} catch (error) {
 			console.error("Error fetching users:", error);
+			toast.error("Could not load users");
 		}
 		setLoading(false);
 	};
@@ -43,6 +45,7 @@ const UserSuggestions = () => {
 			if (json.message) {
 				toast.success(json.message);
 				dispatch(addFollowing(userId));
+				fetchUsers();
 			}
 		} catch (error) {
 			console.error("Error following user:", error);
@@ -62,10 +65,33 @@ const UserSuggestions = () => {
 			if (json.message) {
 				toast.success(json.message);
 				dispatch(removeFollowing(userId));
+				fetchUsers();
 			}
 		} catch (error) {
 			console.error("Error unfollowing user:", error);
 			toast.error("Error unfollowing user");
+		}
+	};
+
+	const handleChat = async (userId) => {
+		try {
+			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/chat`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+				body: JSON.stringify({ userId }),
+			});
+			const json = await response.json();
+			if (json.data) {
+				dispatch(addNewChat(json.data));
+				dispatch(addSelectedChat(json.data));
+				toast.success("Chat opened");
+			}
+		} catch (error) {
+			console.error("Error creating chat:", error);
+			toast.error("Error opening chat");
 		}
 	};
 
@@ -90,21 +116,29 @@ const UserSuggestions = () => {
 								<p className="text-sm text-gray-500">{user.email}</p>
 							</div>
 						</div>
-						{authUser.following && authUser.following.includes(user._id) ? (
+						<div className="flex gap-1">
+							{authUser.following && authUser.following.includes(user._id) ? (
+								<button
+									onClick={() => handleUnfollow(user._id)}
+									className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+								>
+									Unfollow
+								</button>
+							) : (
+								<button
+									onClick={() => handleFollow(user._id)}
+									className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+								>
+									Follow
+								</button>
+							)}
 							<button
-								onClick={() => handleUnfollow(user._id)}
-								className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+								onClick={() => handleChat(user._id)}
+								className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
 							>
-								Unfollow
+								Chat
 							</button>
-						) : (
-							<button
-								onClick={() => handleFollow(user._id)}
-								className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-							>
-								Follow
-							</button>
-						)}
+						</div>
 					</div>
 				))}
 			</div>

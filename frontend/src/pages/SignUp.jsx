@@ -9,6 +9,7 @@ const SignUp = () => {
 	const [lastName, setLastName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [role, setRole] = useState("user");
 	const [load, setLoad] = useState("");
 	const [isShow, setIsShow] = useState(false);
 	const navigate = useNavigate();
@@ -21,7 +22,7 @@ const SignUp = () => {
 		// Signup ---
 		toast.loading("Wait until you SignUp");
 		e.target.disabled = true;
-		fetch(`http://localhost:9001/api/auth/signup`, {
+		fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -31,6 +32,7 @@ const SignUp = () => {
 				lastName: lastName,
 				email: email,
 				password: password,
+				role: role,
 			}),
 		})
 			.then((response) => response.json())
@@ -54,12 +56,13 @@ const SignUp = () => {
 			});
 	};
 	const handleSignup = (e) => {
-		if (firstName && lastName && email && password) {
+		if (firstName && lastName && email && password && role) {
 			const validError = checkValidSignUpFrom(
 				firstName,
 				lastName,
 				email,
-				password
+				password,
+				role
 			);
 			if (validError) {
 				toast.error(validError);
@@ -115,6 +118,19 @@ const SignUp = () => {
 						onChange={(e) => setLastName(e.target.value)}
 						required
 					/>
+					<h3 className="text-xl font-semibold p-1">
+						Select Role
+					</h3>
+					<select
+						className="w-full border border-slate-700 my-3 py-4 px-8 rounded-full bg-white text-black"
+						name="role"
+						value={role}
+						onChange={(e) => setRole(e.target.value)}
+					>
+						<option value="user">User</option>
+						<option value="admin">Admin</option>
+						<option value="moderator">Moderator</option>
+					</select>
 					<h3 className="text-xl font-semibold p-1">
 						Enter Email Address
 					</h3>

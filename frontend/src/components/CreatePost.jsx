@@ -40,7 +40,7 @@ const CreatePost = ({ onPostCreated }) => {
         }
 
         try {
-            const response = await fetch(`http://localhost:9001/api/post`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -68,7 +68,7 @@ const CreatePost = ({ onPostCreated }) => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 mb-4">
             <div className="flex space-x-3">
                 <img
-                    src={authUser?.image ? `http://localhost:9001/${authUser.image}` : '/boy.png'}
+                    src={authUser?.image ? `${import.meta.env.VITE_BACKEND_URL}/${authUser.image}` : '/boy.png'}
                     alt={authUser?.firstName}
                     className="w-10 h-10 rounded-full"
                 />
@@ -140,3 +140,6 @@ const CreatePost = ({ onPostCreated }) => {
 };
 
 export default CreatePost;
+
+
+

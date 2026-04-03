@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-const ENDPOINT = `http://localhost:9001`;
+const ENDPOINT = import.meta.env.VITE_BACKEND_URL;
 const socket = io(ENDPOINT, {
 	reconnectionDelay: 1000,
 	reconnection: true,
@@ -11,3 +11,4 @@ const socket = io(ENDPOINT, {
 });
 
 export default socket;
+
