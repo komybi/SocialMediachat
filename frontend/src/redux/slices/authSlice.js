@@ -21,7 +21,10 @@ const authSlice = createSlice({
 				state.following = state.following.filter(id => id !== action.payload);
 			}
 		},
+		updateUser: (state, action) => {
+			return { ...state, ...action.payload };
+		},
 	},
 });
-export const { addAuth, removeAuth, addFollowing, removeFollowing } = authSlice.actions;
+export const { addAuth, removeAuth, addFollowing, removeFollowing, updateUser } = authSlice.actions;
 export default authSlice.reducer;

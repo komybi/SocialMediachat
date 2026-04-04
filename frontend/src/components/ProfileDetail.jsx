@@ -1,14 +1,77 @@
-import React from "react";
+import React, { useState } from "react";
 import { MdOutlineClose } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { setProfileDetail } from "../redux/slices/conditionSlice";
 import { toast } from "react-toastify";
+import { updateUser } from "../redux/slices/authSlice";
+import { removeAuth } from "../redux/slices/authSlice";
 
 const ProfileDetail = () => {
 	const dispatch = useDispatch();
+	const navigate = useNavigate();
 	const user = useSelector((store) => store.auth);
+	const [selectedImage, setSelectedImage] = useState(null);
+	const [previewImage, setPreviewImage] = useState(null);
+	const [uploading, setUploading] = useState(false);
+
+	const handleImageChange = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			if (!file.type.startsWith('image/')) {
+				toast.error("Please select an image file");
+				return;
+			}
+			setSelectedImage(file);
+			const reader = new FileReader();
+			reader.onloadend = () => {
+				setPreviewImage(reader.result);
+			};
+			reader.readAsDataURL(file);
+		}
+	};
+
+	const handleImageUpload = async () => {
+		if (!selectedImage) return;
+
+		setUploading(true);
+		const formData = new FormData();
+		formData.append("image", selectedImage);
+
+		try {
+			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/update-profile-picture`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+				body: formData,
+			});
+
+			const json = await response.json();
+			if (json.data) {
+				dispatch(updateUser(json.data));
+				setSelectedImage(null);
+				setPreviewImage(null);
+				toast.success("Profile picture updated successfully!");
+			} else {
+				toast.error(json.message || "Error updating profile picture");
+			}
+		} catch (error) {
+			console.error("Error:", error);
+			toast.error("Error updating profile picture");
+		}
+		setUploading(false);
+	};
+
 	const handleUpdate = () => {
 		toast.warn("Coming soon");
+	};
+
+	const handleLogout = () => {
+		localStorage.removeItem("token");
+		dispatch(removeAuth());
+		dispatch(setProfileDetail());
+		navigate("/signin");
 	};
 	return (
 		<div className="flex -m-2 sm:-m-4 flex-col items-center my-6 text-slate-300 min-h-screen w-full fixed top-0 justify-center z-50">
@@ -25,34 +88,50 @@ const ProfileDetail = () => {
 							Email : {user.email}
 						</h3>
 						<button
-							onClick={() => {
-								localStorage.removeItem("token");
-								window.location.reload();
-							}}
+							onClick={handleLogout}
 							className="bg-red-500 hover:bg-red-700 text-white font-bold py-1.5 px-4 rounded mt-3 hidden sm:block"
 						>
 							Logout
 						</button>
 					</div>
-					<div className="self-end flex w-full sm:w-fit items-center justify-evenly sm:flex-col">
-						<img
-							src={user.image}
-							alt="user/image"
-							className="w-20 h-20 rounded-md"
-						/>
-						<div className="flex flex-col">
+					<div className="self-end flex w-full sm:w-fit items-center justify-center sm:flex-col gap-4">
+						<div className="flex flex-col items-center">
+							<img
+								src={previewImage || (user.image ? `${import.meta.env.VITE_BACKEND_URL}/${user.image}` : '/boy.png')}
+								alt="user/image"
+								className="w-24 h-24 rounded-full border-2 border-slate-400"
+							/>
+							<div className="mt-3 flex flex-col gap-2">
+								<label className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1.5 px-3 rounded cursor-pointer text-sm text-center">
+									Choose Image
+									<input
+										type="file"
+										accept="image/*"
+										onChange={handleImageChange}
+										className="hidden"
+									/>
+								</label>
+								{selectedImage && (
+									<button
+										onClick={handleImageUpload}
+										disabled={uploading}
+										className="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm disabled:opacity-50"
+									>
+										{uploading ? "Uploading..." : "Upload"}
+									</button>
+								)}
+							</div>
+						</div>
+						<div className="flex flex-col gap-2">
 							<button
 								onClick={handleUpdate}
-								className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-1.5 px-4 rounded sm:mt-3"
+								className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-1.5 px-4 rounded"
 							>
-								Update
+								Update Profile
 							</button>
 							<button
-								onClick={() => {
-									localStorage.removeItem("token");
-									window.location.reload();
-								}}
-								className="bg-red-500 hover:bg-red-700 text-white font-bold py-1.5 px-4 rounded mt-3 sm:hidden"
+								onClick={handleLogout}
+								className="bg-red-500 hover:bg-red-700 text-white font-bold py-1.5 px-4 rounded"
 							>
 								Logout
 							</button>

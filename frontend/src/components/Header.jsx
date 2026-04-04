@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../assets/logo.jpeg";
 import { useDispatch, useSelector } from "react-redux";
-import { addAuth } from "../redux/slices/authSlice";
+import { addAuth, removeAuth } from "../redux/slices/authSlice";
 import handleScrollTop from "../utils/handleScrollTop";
 import {
 	MdKeyboardArrowDown,
@@ -68,7 +68,8 @@ const Header = () => {
 
 	const handleLogout = () => {
 		localStorage.removeItem("token");
-		window.location.reload();
+		dispatch(removeAuth());
+		dispatch(setHeaderMenu(false));
 		navigate("/signin");
 	};
 

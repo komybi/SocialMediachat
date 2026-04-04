@@ -16,6 +16,7 @@ import ProfileDetail from "./components/ProfileDetail";
 import Loading from "./components/loading/Loading";
 import GroupChatBox from "./components/chatComponents/GroupChatBox";
 import NotificationBox from "./components/NotificationBox";
+import Reels from "./pages/Reels";
 // import GroupChatBox from "./components/GroupChatBox";
 
 const Applayout = () => {
@@ -101,7 +102,7 @@ const routers = createBrowserRouter([
             },
             {
                 path: "/reels",
-                element: <Landing />,
+                element: <Reels />,
             },
             {
                 path: "/resources",

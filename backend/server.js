@@ -31,6 +31,7 @@ const userRouter = require("./routes/user");
 const chatRouter = require("./routes/chat");
 const messageRouter = require("./routes/message");
 const postRouter = require("./routes/post");
+const reelRouter = require("./routes/reel");
 
 // Connect to Database and start server
 const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/chat-app";
@@ -169,6 +170,7 @@ app.use("/api/user", userRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/message", messageRouter);
 app.use("/api/post", postRouter);
+app.use("/api/reel", reelRouter);
 
 // Invalid routes
 app.all("*", (req, res) => {

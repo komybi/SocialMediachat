@@ -40,4 +40,26 @@ const unfollowUser = async (req, res) => {
 	res.status(200).json({ message: "Unfollowed successfully" });
 };
 
-module.exports = { getAuthUser, getAllUsers, followUser, unfollowUser };
+const updateProfilePicture = async (req, res) => {
+	try {
+		const currentUser = req.user;
+
+		if (!req.file) {
+			return res.status(400).json({ message: "No image file provided" });
+		}
+
+		// Update user's image field with the uploaded file path
+		currentUser.image = req.file.path;
+		await currentUser.save();
+
+		res.status(200).json({
+			message: "Profile picture updated successfully",
+			data: currentUser
+		});
+	} catch (error) {
+		console.error("Error updating profile picture:", error);
+		res.status(500).json({ message: "Error updating profile picture" });
+	}
+};
+
+module.exports = { getAuthUser, getAllUsers, followUser, unfollowUser, updateProfilePicture };
