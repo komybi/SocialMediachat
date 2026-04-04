@@ -62,7 +62,14 @@ const PostItem = ({ post, onUpdate }) => {
         });
     };
 
-    console.log("PostItem rendering with post:", post);
+    const mediaUrl = (() => {
+        const rawUrl = post.media?.url || post.image;
+        if (!rawUrl) return null;
+        return rawUrl.startsWith("http")
+            ? rawUrl
+            : `${import.meta.env.VITE_BACKEND_URL}/${rawUrl}`;
+    })();
+
     const isLiked = post.likes.includes(authUser?._id);
 
     return (
@@ -99,23 +106,22 @@ const PostItem = ({ post, onUpdate }) => {
                     <p className="text-gray-800 leading-relaxed">{post.content}</p>
                 </div>
             </div>
-            {(post.media || post.image) && (
+            {mediaUrl && (
                 <div className="mb-3 rounded-xl overflow-hidden bg-gray-100 shadow-inner">
-                    {console.log("Rendering media:", post.media || post.image)}
                     {(post.media?.type === 'image' || post.image) ? (
-                        <img 
-                            src={`${import.meta.env.VITE_BACKEND_URL}/${post.media?.url || post.image}`} 
-                            alt="Post" 
-                            className="w-full object-cover"
+                        <img
+                            src={mediaUrl}
+                            alt="Post"
+                            className="w-full object-cover max-h-[550px]"
                             loading="lazy"
                         />
                     ) : (
                         <div className="relative">
-                            <video 
-                                src={`${import.meta.env.VITE_BACKEND_URL}/${post.media.url}`} 
-                                controls 
+                            <video
+                                src={mediaUrl}
+                                controls
                                 className="w-full max-h-96 object-cover rounded-lg"
-                                poster={`${import.meta.env.VITE_BACKEND_URL}/${post.media.url}`}
+                                poster={mediaUrl}
                             />
                             <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
                                 <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">

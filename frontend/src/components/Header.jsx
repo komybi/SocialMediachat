@@ -132,8 +132,10 @@ const Header = () => {
 			</div>
 			{user && (
 				<div className="flex items-center gap-4">
-					<Link to="/" className="hover:text-blue-400">Home</Link>
-					<Link to="/posts" className="hover:text-blue-400">Posts</Link>
+					<Link to="/posts" className="hover:text-blue-400">Home</Link>
+					<Link to="/home" className="hover:text-blue-400">Chat</Link>
+					<Link to="/reels" className="hover:text-blue-400">Reals</Link>
+					<Link to="/resources" className="hover:text-blue-400">Resource</Link>
 				</div>
 			)}
 

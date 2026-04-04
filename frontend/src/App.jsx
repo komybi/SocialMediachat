@@ -100,6 +100,14 @@ const routers = createBrowserRouter([
                 element: <Posts />,
             },
             {
+                path: "/reels",
+                element: <Landing />,
+            },
+            {
+                path: "/resources",
+                element: <Landing />,
+            },
+            {
                 path: "/signup",
                 element: <SignUp />,
             },

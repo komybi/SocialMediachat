@@ -1,11 +1,11 @@
-const dotenv = require("dotenv");
+const dotenv = require("dotenv"); 
 const path = require("path");
-
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const { Server } = require("socket.io");
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const app = express();
 
@@ -19,7 +19,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('uploads'));
+
+// Serve uploads folder
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 const PORT = process.env.PORT || 3000;
 
 // All routers
@@ -167,9 +170,9 @@ app.use("/api/chat", chatRouter);
 app.use("/api/message", messageRouter);
 app.use("/api/post", postRouter);
 
-// Invaild routes
+// Invalid routes
 app.all("*", (req, res) => {
-	res.json({ error: "Invaild Route" });
+	res.json({ error: "Invalid Route" });
 });
 
 // Error handling middleware
