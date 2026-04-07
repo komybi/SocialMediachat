@@ -34,6 +34,9 @@ const userSchema = new mongoose.Schema(
 			enum: ["student", "admin", "faculty"],
 			default: "student",
 		},
+		lastLogin: {
+			type: Date,
+		},
 	},
 	{
 		timestamps: true,

@@ -45,6 +45,10 @@ const postSchema = new mongoose.Schema(
 				default: Date.now,
 			},
 		}],
+		reports: {
+			type: Number,
+			default: 0,
+		},
 	},
 	{
 		timestamps: true,

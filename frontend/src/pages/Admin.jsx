@@ -1,25 +1,130 @@
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { MdDashboard, MdPeople, MdSchool, MdLibraryBooks, MdDelete, MdRefresh } from 'react-icons/md';
+import { 
+  MdDashboard, 
+  MdPeople, 
+  MdSchool, 
+  MdLibraryBooks, 
+  MdDelete, 
+  MdRefresh,
+  MdArticle,
+  MdVideoLibrary,
+  MdMessage,
+  MdLogout,
+  MdReport,
+  MdTrendingUp,
+  MdNotifications,
+  MdVisibility
+} from 'react-icons/md';
 import { getResources, deleteResource } from '../services/resourceService';
+import { useDispatch, useSelector } from 'react-redux';
+import { removeAuth } from '../redux/slices/authSlice';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const Admin = () => {
   const [resources, setResources] = useState([]);
   const [stats, setStats] = useState({
     totalResources: 0,
     totalFaculty: 0,
-    totalStudents: 12580, // mock static – replace with real data
+    totalStudents: 0,
+    totalPosts: 0,
+    totalReels: 0,
+    totalChats: 0,
+    reportedPosts: 0,
+    reportedReels: 0,
+    activeUsers: 0
+  });
+  const [reports, setReports] = useState({
+    posts: [],
+    reels: []
   });
 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector((store) => store?.auth);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    dispatch(removeAuth());
+    navigate("/signin");
+    toast.success("Logged out successfully");
+  };
+
+  const loadStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Fetch real statistics from backend
+      const statsResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/stats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const statsData = await statsResponse.json();
+      
+      if (statsResponse.ok) {
+        // Fetch reported content
+        const reportsResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/reports`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const reportsData = await reportsResponse.json();
+        
+        if (reportsResponse.ok) {
+          setStats(statsData.data);
+          setReports({
+            posts: reportsData.data.posts.map(post => ({
+              id: post._id,
+              title: post.content.substring(0, 50) + '...',
+              author: post.user?.firstName + ' ' + post.user?.lastName || 'Unknown',
+              reports: post.reports
+            })),
+            reels: reportsData.data.reels.map(reel => ({
+              id: reel._id,
+              title: reel.content.substring(0, 50) + '...',
+              author: reel.user?.firstName + ' ' + reel.user?.lastName || 'Unknown',
+              reports: reel.reports
+            }))
+          });
+        }
+      } else {
+        throw new Error(statsData.message);
+      }
+      
+      // Load resources (existing logic)
+      const allResources = getResources();
+      setResources(allResources);
+      
+    } catch (error) {
+      console.error('Error loading stats:', error);
+      toast.error('Failed to load statistics');
+      
+      // Fallback to mock data if API fails
+      const allResources = getResources();
+      const uniqueFaculty = new Set(allResources.map((r) => r.facultyId));
+      
+      setStats({
+        totalResources: allResources.length,
+        totalFaculty: uniqueFaculty.size,
+        totalStudents: 12580,
+        totalPosts: 2,
+        totalReels: 2,
+        totalChats: 3420,
+        reportedPosts: 1,
+        reportedReels: 1,
+        activeUsers: 8920
+      });
+      
+      setResources(allResources);
+    }
+  };
+
   const loadData = () => {
-    const allResources = getResources();
-    setResources(allResources);
-    const uniqueFaculty = new Set(allResources.map((r) => r.facultyId));
-    setStats((prev) => ({
-      ...prev,
-      totalResources: allResources.length,
-      totalFaculty: uniqueFaculty.size,
-    }));
+    loadStats();
   };
 
   useEffect(() => {
@@ -37,6 +142,31 @@ const Admin = () => {
     loadData();
   };
 
+  const handleDismissReport = async (type, id) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/dismiss/${type}/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast.success(result.message);
+        loadData(); // Refresh the data
+      } else {
+        toast.error(result.message || 'Failed to dismiss report');
+      }
+    } catch (error) {
+      console.error('Error dismissing report:', error);
+      toast.error('Error dismissing report');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 p-6">
       <div className="max-w-7xl mx-auto">
@@ -45,55 +175,150 @@ const Admin = () => {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
               <MdDashboard className="text-blue-400" />
-              Admin 
+              Admin Dashboard
             </h1>
-            <p className="text-indigo-200 mt-1">Platform overview & resource management</p>
+            <p className="text-indigo-200 mt-1">Platform overview & content management</p>
           </div>
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/30 hover:bg-white/20 transition"
-          >
-            <MdRefresh className="text-white" />
-            <span className="text-white">Refresh</span>
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/30 hover:bg-white/20 transition"
+            >
+              <MdRefresh className="text-white" />
+              <span className="text-white">Refresh</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/20 backdrop-blur-md rounded-xl border border-red-500/30 hover:bg-red-500/30 transition"
+            >
+              <MdLogout className="text-red-300" />
+              <span className="text-red-300">Logout</span>
+            </button>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Total Resources</p>
-                <p className="text-4xl font-bold text-white">{stats.totalResources}</p>
-              </div>
-              <MdLibraryBooks className="text-4xl text-blue-400 opacity-80" />
+        {/* User Info */}
+        <div className="mb-8 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="text-white">
+              <p className="text-sm text-gray-300">Logged in as</p>
+              <p className="font-semibold">{user?.firstName} {user?.lastName} (Admin)</p>
             </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Active Faculty</p>
-                <p className="text-4xl font-bold text-white">{stats.totalFaculty}</p>
-              </div>
-              <MdSchool className="text-4xl text-purple-400 opacity-80" />
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Total Students</p>
-                <p className="text-4xl font-bold text-white">{stats.totalStudents.toLocaleString()}</p>
-              </div>
-              <MdPeople className="text-4xl text-amber-400 opacity-80" />
+            <div className="flex items-center gap-2 text-green-400">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span className="text-sm">Active</span>
             </div>
           </div>
         </div>
 
-        {/* All Resources Table */}
+        {/* Main Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:scale-105 transition-transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm">Total Users</p>
+                <p className="text-4xl font-bold text-white">{(stats.totalStudents + stats.totalFaculty).toLocaleString()}</p>
+              </div>
+              <MdPeople className="text-4xl text-blue-400 opacity-80" />
+            </div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:scale-105 transition-transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm">Total Posts</p>
+                <p className="text-4xl font-bold text-white">{stats.totalPosts.toLocaleString()}</p>
+              </div>
+              <MdArticle className="text-4xl text-purple-400 opacity-80" />
+            </div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:scale-105 transition-transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm">Total Reels</p>
+                <p className="text-4xl font-bold text-white">{stats.totalReels.toLocaleString()}</p>
+              </div>
+              <MdVideoLibrary className="text-4xl text-amber-400 opacity-80" />
+            </div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:scale-105 transition-transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm">Total Chats</p>
+                <p className="text-4xl font-bold text-white">{stats.totalChats.toLocaleString()}</p>
+              </div>
+              <MdMessage className="text-4xl text-green-400 opacity-80" />
+            </div>
+          </div>
+        </div>
+
+        {/* Reports Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
+            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+              <MdReport className="text-red-400" />
+              Reported Posts ({stats.reportedPosts})
+            </h2>
+            {reports.posts.length === 0 ? (
+              <div className="text-center py-8 text-gray-300">
+                <p>No reported posts</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {reports.posts.map((post) => (
+                  <div key={post.id} className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
+                    <div>
+                      <p className="text-white font-medium">{post.title}</p>
+                      <p className="text-gray-300 text-sm">by {post.author}</p>
+                      <p className="text-red-400 text-sm">{post.reports} reports</p>
+                    </div>
+                    <button
+                      onClick={() => handleDismissReport('post', post.id)}
+                      className="px-3 py-1 bg-green-500/20 text-green-300 rounded hover:bg-green-500/30 transition"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
+            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+              <MdReport className="text-red-400" />
+              Reported Reels ({stats.reportedReels})
+            </h2>
+            {reports.reels.length === 0 ? (
+              <div className="text-center py-8 text-gray-300">
+                <p>No reported reels</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {reports.reels.map((reel) => (
+                  <div key={reel.id} className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
+                    <div>
+                      <p className="text-white font-medium">{reel.title}</p>
+                      <p className="text-gray-300 text-sm">by {reel.author}</p>
+                      <p className="text-red-400 text-sm">{reel.reports} reports</p>
+                    </div>
+                    <button
+                      onClick={() => handleDismissReport('reel', reel.id)}
+                      className="px-3 py-1 bg-green-500/20 text-green-300 rounded hover:bg-green-500/30 transition"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Resources Table */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
             <MdLibraryBooks />
-            All Shared Resources (All Faculty)
+            All Shared Resources ({stats.totalResources})
           </h2>
           {resources.length === 0 ? (
             <div className="text-center py-12 text-gray-300">

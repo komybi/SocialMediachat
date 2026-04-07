@@ -43,6 +43,10 @@ const reelSchema = new mongoose.Schema(
 			type: Number,
 			default: 0,
 		},
+		reports: {
+			type: Number,
+			default: 0,
+		},
 	},
 	{
 		timestamps: true,

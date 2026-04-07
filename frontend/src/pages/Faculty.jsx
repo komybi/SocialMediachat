@@ -24,6 +24,7 @@ import UserSuggestions from "../components/UserSuggestions";
 import ResourcesView from "../components/ResourcesView";
 import Posts from "./Posts";
 import Reels from "./Reels";
+import ProfilePictureUpload from "../components/ProfilePictureUpload";
 import {
   setChatDetailsBox,
   setSocketConnected,
@@ -48,6 +49,7 @@ let selectedChatCompare;
 
 const Faculty = () => {
   const [activeTab, setActiveTab] = useState("chat");
+  const [showProfileUpload, setShowProfileUpload] = useState(false);
   const selectedChat = useSelector((store) => store?.myChat?.selectedChat);
   const user = useSelector((store) => store?.auth);
   const newMessageRecieved = useSelector(
@@ -204,50 +206,110 @@ const Faculty = () => {
               )}
             </button>
 
-            <div className="hidden md:block text-right">
-              <p className="text-sm text-white/70">Welcome back,</p>
-              <p className="font-semibold">{user.firstName} {user.lastName}</p>
-            </div>
-
-            <div
-              ref={headerUserBox}
-              onClick={() => dispatch(setHeaderMenu(!isHeaderMenu))}
-              className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full p-1 pr-3 cursor-pointer transition-all hover:bg-white/20 border border-white/20"
-            >
-              <img
-                src={user.image}
-                alt="profile"
-                className="w-10 h-10 rounded-full ring-2 ring-amber-400/50"
-              />
-              <span className="text-white">
-                {isHeaderMenu ? <MdKeyboardArrowDown /> : <MdKeyboardArrowUp />}
-              </span>
-            </div>
-
-            {isHeaderMenu && (
-              <div
-                ref={headerMenuBox}
-                className="absolute top-16 md:top-20 right-4 w-48 bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl border border-white/20 overflow-hidden z-50"
-              >
-                <button
-                  onClick={() => {
-                    dispatch(setHeaderMenu(false));
-                    dispatch(setProfileDetail());
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <PiUserCircleLight className="text-xl" />
-                  <span>Profile</span>
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 transition-colors border-t border-white/10"
-                >
-                  <IoLogOutOutline className="text-xl" />
-                  <span>Logout</span>
-                </button>
+            {/* Profile Section */}
+            <div className="flex items-center gap-4">
+              <div className="hidden md:block text-right">
+                <p className="text-sm text-white/70">Welcome back,</p>
+                <p className="font-semibold">{user.firstName} {user.lastName}</p>
               </div>
-            )}
+
+              {/* Profile Picture with Dropdown */}
+              <div className="relative">
+                {/* Profile Picture - Click to upload */}
+                <div
+                  onClick={() => setShowProfileUpload(true)}
+                  className="w-12 h-12 rounded-full border-2 border-amber-400/50 cursor-pointer overflow-hidden hover:border-amber-400 transition-all"
+                  title="Click to change profile picture"
+                >
+                  <img
+                    src={
+                      user?.image
+                        ? (user.image.startsWith('http')
+                            ? user.image
+                            : `${import.meta.env.VITE_BACKEND_URL}/${user.image}`)
+                        : "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+                    }
+                    alt="profile"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+                    }}
+                  />
+                </div>
+
+                {/* Dropdown Menu */}
+                <div
+                  ref={headerMenuBox}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dispatch(setHeaderMenu(!isHeaderMenu));
+                  }}
+                  className="ml-3 w-8 h-8 rounded-full bg-amber-400/80 hover:bg-amber-400 cursor-pointer flex items-center justify-center transition-all"
+                  title="Menu"
+                >
+                  <MdKeyboardArrowDown 
+                    fontSize={16} 
+                    className="text-white transition-transform duration-200"
+                    style={{
+                      transform: isHeaderMenu ? 'rotate(180deg)' : 'rotate(0deg)'
+                    }}
+                  />
+                </div>
+
+                {/* Dropdown Content */}
+                {isHeaderMenu && (
+                  <div
+                    className="absolute top-14 right-0 w-56 bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50"
+                  >
+                    {/* Update Profile Picture */}
+                    <div
+                      onClick={() => {
+                        dispatch(setHeaderMenu(false));
+                        setShowProfileUpload(true);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={
+                            user?.image
+                              ? (user.image.startsWith('http')
+                                  ? user.image
+                                  : `${import.meta.env.VITE_BACKEND_URL}/${user.image}`)
+                              : "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+                          }
+                          alt="profile"
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <span className="font-medium">Update Profile Picture</span>
+                      </div>
+                    </div>
+
+                    {/* View Profile */}
+                    <div
+                      onClick={() => {
+                        dispatch(setHeaderMenu(false));
+                        dispatch(setProfileDetail());
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer border-t border-gray-200"
+                    >
+                      <PiUserCircleLight className="text-xl text-gray-600" />
+                      <span className="font-medium">View Profile</span>
+                    </div>
+
+                    {/* Logout */}
+                    <div
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer border-t border-gray-200"
+                    >
+                      <IoLogOutOutline className="text-xl text-gray-600" />
+                      <span className="font-medium">Logout</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -502,6 +564,11 @@ const Faculty = () => {
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
             <ResourcesView />
           </div>
+        )}
+
+        {/* Profile Picture Upload Modal */}
+        {showProfileUpload && (
+          <ProfilePictureUpload onClose={() => setShowProfileUpload(false)} />
         )}
       </div>
     </div>
