@@ -17,6 +17,7 @@ import Loading from "./components/loading/Loading";
 import GroupChatBox from "./components/chatComponents/GroupChatBox";
 import NotificationBox from "./components/NotificationBox";
 import Reels from "./pages/Reels";
+import FacultyResources from "./components/FacultyResources";
 // Import the new dashboards
 import AdminDashboard from "./pages/Admin";
 import FacultyDashboard from "./pages/Faculty";
@@ -108,7 +109,7 @@ const routers = createBrowserRouter([
             },
             {
                 path: "/resources",
-                element: <Landing />,
+                element: <FacultyResources />,
             },
             {
                 path: "/signup",

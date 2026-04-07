@@ -50,5 +50,9 @@ export const deleteResource = (id) => {
 
 export const getResourcesByFaculty = (facultyId) => {
   const resources = getResources();
+  // If facultyId is null or undefined, return all resources (for students to view)
+  if (!facultyId) {
+    return resources;
+  }
   return resources.filter((r) => r.facultyId === facultyId);
 };
