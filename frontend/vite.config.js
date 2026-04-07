@@ -6,5 +6,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5176,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:9000',
+        changeOrigin: true
+      }
+    }
   },
+  define: {
+    'import.meta.env.VITE_BACKEND_URL': JSON.stringify('http://localhost:9000')
+  }
 })

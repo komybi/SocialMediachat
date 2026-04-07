@@ -56,13 +56,7 @@ const Header = () => {
 	// Scroll to top of page && Redirect Auth change --------------------------------
 	const { pathname } = useLocation();
 	useEffect(() => {
-		if (user) {
-			if (pathname === "/signin" || pathname === "/signup") {
-				navigate("/home");
-			}
-		}
-		// Remove the automatic redirect to signin for non-authenticated users
-		// Let them explore the landing page first
+		// Remove automatic redirects - let role-based login handle navigation
 		handleScrollTop();
 	}, [pathname, user]);
 

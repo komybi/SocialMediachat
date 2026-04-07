@@ -17,7 +17,9 @@ import Loading from "./components/loading/Loading";
 import GroupChatBox from "./components/chatComponents/GroupChatBox";
 import NotificationBox from "./components/NotificationBox";
 import Reels from "./pages/Reels";
-// import GroupChatBox from "./components/GroupChatBox";
+// Import the new dashboards
+import AdminDashboard from "./pages/Admin";
+import FacultyDashboard from "./pages/Faculty";
 
 const Applayout = () => {
     const [toastPosition, setToastPosition] = useState("bottom-left");
@@ -64,11 +66,10 @@ const Applayout = () => {
                     border: "1px solid #dadadaaa",
                     textTransform: "capitalize",
                 }}
-                // transition:Bounce
             />
             <Header />
             <div className="h-16 md:h-20"></div>
-            <div className="min-h-[85vh] p-2 sm:p-4  bg-gradient-to-tr to-black via-blue-900 from-black">
+            <div className="min-h-[85vh] p-2 sm:p-4 bg-gradient-to-tr to-black via-blue-900 from-black">
                 <Outlet />
                 {isProfileDetails && <ProfileDetail />}
                 {isGroupChatBox && <GroupChatBox />}
@@ -79,6 +80,7 @@ const Applayout = () => {
         </div>
     );
 };
+
 const routers = createBrowserRouter([
     {
         path: "/",
@@ -122,6 +124,15 @@ const routers = createBrowserRouter([
             },
         ],
         errorElement: <Error />,
+    },
+    // New standalone routes for dashboards (no Header/Footer)
+    {
+        path: "/admin",
+        element: <AdminDashboard />,
+    },
+    {
+        path: "/faculty",
+        element: <FacultyDashboard />,
     },
 ]);
 

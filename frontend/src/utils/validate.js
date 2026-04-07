@@ -19,7 +19,7 @@ export const checkValidSignUpFrom = (firstName, lastName, email, password, role)
 	const isEmailValid = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(
 		email
 	);
-	const validRoles = ["user", "admin", "moderator"];
+	const validRoles = ["admin", "faculty", "student"];
 	const isRoleValid = role && validRoles.includes(role);
 
 	if (!isFirstValid) return "Invalid first name format";
