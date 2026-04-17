@@ -1,13 +1,5 @@
 # Chat Application MERN-Stack Web Application.
 
-<p align="center">
-  <b style="color: blue;  ">Visitor count</b>
-  <br>
-  <a style="" href="https://github.com/akashdeep023">
-  <img src="https://profile-counter.glitch.me/chat-app/count.svg" />
-  </a>
-</p>
-
 ---
 
 <a style="" href="https://chat-application-jack.vercel.app/">
@@ -20,7 +12,7 @@
 
 ## Project Overview
 
-_A real-time **Chat application** built using the MERN stack (MongoDB, Express, React, Node.js) and styled with Tailwind CSS. It supports user authentication, group chats, and instant messaging with real-time updates via Socket.IO. The application is fully responsive and provides smooth communication with features like notifications and state management using Redux._
+_A real-time **Chat application** built using the MERN stack (MongoDB, Express, React, Node.js) and styled with Tailwind CSS. It supports user authentication, group chats, and instant messaging with sound and visual notifications._
 
 ## Technologies & Packages Used
 
