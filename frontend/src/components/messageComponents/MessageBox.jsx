@@ -104,8 +104,11 @@ const MessageBox = ({ chatId }) => {
 					</div>
 					<img
 						src={getChatImage(selectedChat, authUserId)}
-						alt=""
-						className="h-9 w-9 rounded-full"
+						alt="profile"
+						className="h-9 w-9 rounded-full object-cover"
+						onError={(e) => {
+							e.target.src = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+						}}
 					/>
 					<h1 className="line-clamp-1">
 						{getChatName(selectedChat, authUserId)}

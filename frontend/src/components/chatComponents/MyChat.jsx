@@ -106,9 +106,12 @@ const MyChat = () => {
                                     }}
                                 >
                                     <img
-                                        className="h-12 min-w-12 rounded-full"
+                                        className="h-12 min-w-12 rounded-full object-cover"
                                         src={getChatImage(chat, authUserId)}
-                                        alt="img"
+                                        alt="profile"
+                                        onError={(e) => {
+                                            e.target.src = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+                                        }}
                                     />
                                     <div className="w-full">
                                         <div className="flex justify-between items-center w-full">

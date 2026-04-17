@@ -162,10 +162,19 @@ const Header = () => {
 						className="flex flex-nowrap transition-all items-center ml-3  border border-slate-400 rounded-full bg-gradient-to-tr to-slate-800 text-black via-white  from-slate-800 hover:bg-gradient-to-br shadow-sm  cursor-pointer"
 					>
 						<img
-							src={user.image}
-							alt="gg"
-							className="w-10 h-10 rounded-full"
-						/>
+	src={
+		user?.image
+			? (user.image.startsWith('http')
+				? user.image
+				: `${import.meta.env.VITE_BACKEND_URL}/${user.image}`)
+			: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+	}
+	alt="profile"
+	className="w-10 h-10 rounded-full object-cover"
+	onError={(e) => {
+		e.target.src = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+	}}
+/>
 						<span className="m-2">
 							{isHeaderMenu ? (
 								<MdKeyboardArrowDown fontSize={20} />

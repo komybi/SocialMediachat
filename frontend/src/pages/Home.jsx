@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { MdChat, MdPeople } from "react-icons/md";
+import React, { useEffect, useState } from "react";
+import { MdChat, MdPeople, MdAnnouncement } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import UserSearch from "../components/chatComponents/UserSearch";
@@ -7,34 +7,61 @@ import MyChat from "../components/chatComponents/MyChat";
 import MessageBox from "../components/messageComponents/MessageBox";
 import ChatNotSelected from "../components/chatComponents/ChatNotSelected";
 import UserSuggestions from "../components/UserSuggestions";
+import AnnouncementCreate from "../components/AnnouncementCreate";
 import {
-	setChatDetailsBox,
-	setSocketConnected,
-	setUserSearchBox,
-	setUserSuggestionsBox,
+  setChatDetailsBox,
+  setSocketConnected,
+  setUserSearchBox,
+  setUserSuggestionsBox,
 } from "../redux/slices/conditionSlice";
 import socket from "../socket/socket";
 import { addAllMessages, addNewMessage } from "../redux/slices/messageSlice";
 import {
-	addNewChat,
-	addNewMessageRecieved,
-	deleteSelectedChat,
+  addNewChat,
+  addNewMessageRecieved,
+  deleteSelectedChat,
 } from "../redux/slices/myChatSlice";
 import { toast } from "react-toastify";
 import { receivedSound } from "../utils/notificationSound";
 let selectedChatCompare;
 
 const Home = () => {
-	const selectedChat = useSelector((store) => store?.myChat?.selectedChat);
-	const dispatch = useDispatch();
-	const navigate = useNavigate();
-	const isUserSearchBox = useSelector(
-		(store) => store?.condition?.isUserSearchBox
-	);
-	const isUserSuggestionsBox = useSelector(
-		(store) => store?.condition?.isUserSuggestionsBox
-	);
-	const authUserId = useSelector((store) => store?.auth?._id);
+  const selectedChat = useSelector((store) => store?.myChat?.selectedChat);
+  const user = useSelector((store) => store?.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const isUserSearchBox = useSelector(
+    (store) => store?.condition?.isUserSearchBox
+  );
+  const isUserSuggestionsBox = useSelector(
+    (store) => store?.condition?.isUserSuggestionsBox
+  );
+  const authUserId = useSelector((store) => store?.auth?._id);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [publicAnnouncements, setPublicAnnouncements] = useState([]);
+
+  // Fetch public announcements
+  useEffect(() => {
+    const fetchPublicAnnouncements = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/announcement?visibility=public`, {
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const result = await response.json();
+        if (result.success) {
+          setPublicAnnouncements(result.data);
+        }
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+      }
+    };
+
+    if (authUserId) {
+      fetchPublicAnnouncements();
+    }
+  }, [authUserId]);
 
 	// socket connection
 	useEffect(() => {
@@ -106,38 +133,81 @@ const Home = () => {
 	});
 
 	return (
-		<div className="flex w-full border-slate-500 border rounded-sm shadow-md shadow-black relative">
+		<div className="w-full">
 			{authUserId ? (
 				<>
-					<div
-						className={`${
-							selectedChat && "hidden"
-						} sm:block sm:w-[40%] w-full h-[80vh] bg-black/40 border-r border-slate-500 relative`}
-					>
-						<div className="absolute bottom-3 right-6 cursor-pointer text-white flex space-x-2">
-							<MdPeople
-								title="Friend Suggestions"
-								fontSize={32}
-								onClick={() => dispatch(setUserSuggestionsBox())}
-							/>
-							<MdChat
-								title="New Chat"
-								fontSize={32}
-								onClick={() => dispatch(setUserSearchBox())}
-							/>
+					{/* Public Announcements Section */}
+					{publicAnnouncements.length > 0 && (
+						<div className="mb-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 shadow-lg">
+							<div className="flex items-center justify-between mb-3">
+								<h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+									<MdAnnouncement className="text-amber-600" />
+									Public Announcements ({publicAnnouncements.length})
+								</h3>
+								<button
+									onClick={() => setShowAnnouncementModal(true)}
+									className="px-3 py-1 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition text-sm"
+								>
+									Create
+								</button>
+							</div>
+							<div className="space-y-2 max-h-40 overflow-y-auto">
+								{publicAnnouncements.map((announcement) => (
+									<div key={announcement._id} className="bg-white rounded-md p-3 border border-amber-100">
+										<div className="flex items-start justify-between">
+											<div className="flex-1">
+												<h4 className="font-medium text-gray-800 text-sm mb-1">{announcement.title}</h4>
+												<p className="text-gray-600 text-xs line-clamp-2">{announcement.content}</p>
+												<div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+													<span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+														announcement.priority === 'high' ? 'bg-red-100 text-red-600' :
+														announcement.priority === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+														'bg-green-100 text-green-600'
+													}`}>
+														{announcement.priority.toUpperCase()}
+													</span>
+													<span>By {announcement.author?.firstName} {announcement.author?.lastName}</span>
+													<span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
 						</div>
-						{isUserSearchBox ? <UserSearch /> : isUserSuggestionsBox ? <UserSuggestions /> : <MyChat />}
-					</div>
-					<div
-						className={`${
-							!selectedChat && "hidden"
-						} sm:block sm:w-[60%] w-full h-[80vh] bg-black/40 relative overflow-hidden`}
-					>
-						{selectedChat ? (
-							<MessageBox chatId={selectedChat?._id} />
-						) : (
-							<ChatNotSelected />
-						)}
+					)}
+					
+					<div className="flex w-full border-slate-500 border rounded-sm shadow-md shadow-black relative">
+						<div
+							className={`${
+									selectedChat && "hidden"
+								} sm:block sm:w-[40%] w-full h-[80vh] bg-black/40 border-r border-slate-500 relative`}
+						>
+							<div className="absolute bottom-3 right-6 cursor-pointer text-white flex space-x-2">
+								<MdPeople
+									title="Friend Suggestions"
+									fontSize={32}
+									onClick={() => dispatch(setUserSuggestionsBox())}
+								/>
+								<MdChat
+									title="New Chat"
+									fontSize={32}
+									onClick={() => dispatch(setUserSearchBox())}
+								/>
+							</div>
+							{isUserSearchBox ? <UserSearch /> : isUserSuggestionsBox ? <UserSuggestions /> : <MyChat />}
+						</div>
+						<div
+							className={`${
+									!selectedChat && "hidden"
+								} sm:block sm:w-[60%] w-full h-[80vh] bg-black/40 relative overflow-hidden`}
+						>
+							{selectedChat ? (
+									<MessageBox chatId={selectedChat?._id} />
+								) : (
+									<ChatNotSelected />
+								)}
+						</div>
 					</div>
 				</>
 			) : (
@@ -153,6 +223,17 @@ const Home = () => {
 						</Link>
 					</div>
 				</div>
+			)}
+			
+			{/* Announcement Modal */}
+			{showAnnouncementModal && (
+				<AnnouncementCreate
+					onClose={() => setShowAnnouncementModal(false)}
+					onAnnouncementCreated={(newAnnouncement) => {
+						setPublicAnnouncements(prev => [newAnnouncement, ...prev]);
+						toast.success("Announcement created successfully!");
+					}}
+				/>
 			)}
 		</div>
 	);

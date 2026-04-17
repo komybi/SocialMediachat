@@ -10,8 +10,8 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const app = express();
 
 const corsOptions = {
-	origin: process.env.FRONTEND_URL,
-	methods: ["GET", "POST", "DELETE"],
+	origin: ["http://localhost:5176", "http://127.0.0.1:5176", "http://localhost:3000", "http://127.0.0.1:3000"],
+	methods: ["GET", "POST", "DELETE", "PUT"],
 	allowedHeaders: ["Content-Type", "Authorization"],
 	credentials: true,
 };
@@ -33,6 +33,7 @@ const messageRouter = require("./routes/message");
 const postRouter = require("./routes/post");
 const reelRouter = require("./routes/reel");
 const adminRouter = require("./routes/admin");
+const announcementRouter = require("./routes/announcement");
 
 // Connect to Database and start server
 const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/chat-app";
@@ -173,6 +174,7 @@ app.use("/api/message", messageRouter);
 app.use("/api/post", postRouter);
 app.use("/api/reel", reelRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/announcement", announcementRouter);
 
 // Invalid routes
 app.all("*", (req, res) => {

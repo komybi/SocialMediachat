@@ -88,12 +88,21 @@ const AllMessages = ({ allMessage }) => {
                                     (allMessage[idx + 1]?.sender?._id !==
                                     message?.sender?._id ? (
                                         <img
-                                            src={message?.sender?.image}
+                                            src={
+                                                message?.sender?.image
+                                                    ? (message.sender.image.startsWith('http')
+                                                        ? message.sender.image
+                                                        : `${import.meta.env.VITE_BACKEND_URL}/${message.sender.image}`)
+                                                    : "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+                                            }
                                             alt=""
-                                            className="h-9 w-9 rounded-full"
+                                            className="h-9 w-9 rounded-full object-cover"
+                                            onError={(e) => {
+                                                e.target.src = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+                                            }}
                                         />
                                     ) : (
-                                        <div className="h-9 w-9 rounded-full"></div>
+                                        <div className="h-9 w-9 rounded-full bg-gray-300"></div>
                                     ))}
                                 <div
                                     className={`${
