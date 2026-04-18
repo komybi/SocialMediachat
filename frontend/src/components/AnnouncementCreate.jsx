@@ -5,7 +5,7 @@ import { MdOutlineClose, MdAttachFile, MdDelete } from "react-icons/md";
 
 const AnnouncementCreate = ({ onClose, onAnnouncementCreated }) => {
   const dispatch = useDispatch();
-  const user = useSelector((store) => store.auth);
+  const user = useSelector((store) => store?.auth);
   
   const [formData, setFormData] = useState({
     title: "",

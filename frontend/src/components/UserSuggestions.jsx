@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { addFollowing, removeFollowing } from "../redux/slices/authSlice";
 import { addNewChat, addSelectedChat } from "../redux/slices/myChatSlice";
+import { getChatImage } from "../utils/getChatImage";
 
 const UserSuggestions = () => {
 	const [users, setUsers] = useState([]);
@@ -17,7 +18,7 @@ const UserSuggestions = () => {
 	const fetchUsers = async () => {
 		setLoading(true);
 		try {
-			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/users`, {
+			const response = await fetch(`http://localhost:9000/api/user/users`, {
 				headers: {
 					Authorization: `Bearer ${localStorage.getItem("token")}`,
 				},
@@ -35,7 +36,7 @@ const UserSuggestions = () => {
 
 	const handleFollow = async (userId) => {
 		try {
-			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/follow/${userId}`, {
+			const response = await fetch(`http://localhost:9000/api/user/follow/${userId}`, {
 				method: "POST",
 				headers: {
 					Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -55,7 +56,7 @@ const UserSuggestions = () => {
 
 	const handleUnfollow = async (userId) => {
 		try {
-			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/unfollow/${userId}`, {
+			const response = await fetch(`http://localhost:9000/api/user/unfollow/${userId}`, {
 				method: "POST",
 				headers: {
 					Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -107,12 +108,14 @@ const UserSuggestions = () => {
 					<div key={user._id} className="flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all">
 						<div className="flex items-center">
 							<img
-								src={user.image}
-								alt={user.firstName}
+								src={getChatImage(user)}
+								alt={user.firstName || user.email}
 								className="w-10 h-10 rounded-full mr-3"
 							/>
 							<div>
-								<p className="font-medium text-white">{user.firstName} {user.lastName}</p>
+								<p className="font-medium text-white">
+									{user.firstName ? user.firstName : user.email} {user.lastName || ''}
+								</p>
 								<p className="text-sm text-gray-300">{user.email}</p>
 							</div>
 						</div>

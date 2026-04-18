@@ -1,244 +1,236 @@
 const Announcement = require("../models/Announcement");
-const wrapAsync = require("../middlewares/wrapAsync");
+const fs = require("fs");
+const path = require("path");
 
-// Get all announcements (filtered by user role and visibility)
-const getAllAnnouncements = async (req, res) => {
-  try {
-    const { type, visibility } = req.query;
-    const userRole = req.user.role;
-    
-    let filter = { isActive: true };
-    
-    // Filter by visibility
-    if (visibility === 'public') {
-      filter.visibility = 'public';
-    } else if (visibility === 'private') {
-      filter.visibility = 'private';
+// Helper: extract nested jobDetails from flat FormData fields (jobDetails.company, etc.)
+const extractJobDetails = (body) => {
+  const jobDetails = {};
+  for (const key in body) {
+    if (key.startsWith("jobDetails.")) {
+      const field = key.split(".")[1];
+      jobDetails[field] = body[key];
     }
-    
-    // Filter by type if specified
-    if (type) {
-      filter.type = type;
-    }
-    
-    // Filter by target audience based on user role
-    if (userRole !== 'admin' && userRole !== 'faculty') {
-      filter.$or = [
-        { targetAudience: 'all' },
-        { targetAudience: userRole }
-      ];
-    }
-    
-    const announcements = await Announcement.find(filter)
-      .populate('author', 'firstName lastName email')
-      .sort({ createdAt: -1 });
-    
-    res.status(200).json({
-      success: true,
-      data: announcements,
-      count: announcements.length
-    });
-  } catch (error) {
-    console.error("Error fetching announcements:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching announcements"
-    });
   }
+  return Object.keys(jobDetails).length ? jobDetails : null;
 };
 
-// Create new announcement
-const createAnnouncement = async (req, res) => {
+// Create a new announcement
+exports.createAnnouncement = async (req, res) => {
   try {
     const {
       title,
       content,
       type,
       visibility,
-      targetAudience,
-      jobDetails,
       priority,
-      expiresAt
+      expiresAt,
+      targetAudience, // this is a JSON string from frontend
     } = req.body;
-    
-    // Validate required fields
-    if (!title || !content) {
-      return res.status(400).json({
-        success: false,
-        message: "Title and content are required"
+
+    // Parse targetAudience
+    let parsedAudience = ["all"];
+    if (targetAudience) {
+      try {
+        parsedAudience = JSON.parse(targetAudience);
+      } catch (e) {
+        parsedAudience = [targetAudience];
+      }
+    }
+
+    // Build jobDetails if type === 'job'
+    let jobDetailsObj = null;
+    if (type === "job") {
+      jobDetailsObj = extractJobDetails(req.body);
+      // If no nested fields found, maybe they were sent as direct properties? (but frontend uses nested)
+      if (!jobDetailsObj || Object.keys(jobDetailsObj).length === 0) {
+        // fallback: check for direct fields (just in case)
+        const { company, position, location, salary, requirements, applicationDeadline, applicationLink } = req.body;
+        if (company || position || location || salary || requirements || applicationDeadline || applicationLink) {
+          jobDetailsObj = { company, position, location, salary, requirements, applicationDeadline, applicationLink };
+        }
+      }
+    }
+
+    // Process uploaded files
+    const attachments = (req.files || []).map((file) => ({
+      filename: file.filename,
+      originalName: file.originalname,
+      path: file.path,
+      size: file.size,
+      mimeType: file.mimetype,
+      uploadedAt: new Date(),
+    }));
+
+    const announcement = new Announcement({
+      title,
+      content,
+      type: type || "general",
+      visibility: visibility || "private",
+      priority: priority || "medium",
+      expiresAt: expiresAt || null,
+      targetAudience: parsedAudience,
+      jobDetails: jobDetailsObj,
+      attachments,
+      author: req.user.id, // assuming authorization middleware sets req.user
+      isActive: true,
+    });
+
+    await announcement.save();
+
+    // Populate author info before sending response
+    const populatedAnnouncement = await Announcement.findById(announcement._id).populate("author", "name email");
+
+    res.status(201).json({
+      success: true,
+      data: populatedAnnouncement,
+      message: "Announcement created successfully",
+    });
+  } catch (error) {
+    console.error("Create announcement error:", error);
+    // If files were uploaded but save fails, clean them to avoid orphan files
+    if (req.files) {
+      req.files.forEach((file) => {
+        fs.unlink(file.path, (err) => {
+          if (err) console.error("Failed to delete file:", file.path, err);
+        });
       });
     }
-    
-    // Only faculty and admin can create announcements
-    if (req.user.role !== 'faculty' && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: "Only faculty and admin can create announcements"
-      });
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create announcement",
+    });
+  }
+};
+
+// Get all announcements (with filters)
+exports.getAllAnnouncements = async (req, res) => {
+  try {
+    const { type, visibility, audience } = req.query;
+    let filter = { isActive: true };
+
+    if (type) filter.type = type;
+    if (visibility) filter.visibility = visibility;
+    if (audience) filter.targetAudience = { $in: [audience] };
+
+    // Optional: only show public announcements to non-authenticated users,
+    // but here we assume the route is protected by authorization.
+    // You can add role‑based filtering if needed.
+
+    const announcements = await Announcement.find(filter)
+      .sort({ priority: -1, createdAt: -1 }) // high priority first, then newest
+      .populate("author", "name email");
+
+    res.status(200).json({
+      success: true,
+      data: announcements,
+    });
+  } catch (error) {
+    console.error("Get announcements error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Get single announcement by ID
+exports.getAnnouncement = async (req, res) => {
+  try {
+    const announcement = await Announcement.findById(req.params.id).populate("author", "name email");
+    if (!announcement) {
+      return res.status(404).json({ success: false, message: "Announcement not found" });
     }
-    
-    // Handle file attachments if any
-    let attachments = [];
-    if (req.files && req.files.length > 0) {
-      attachments = req.files.map(file => ({
+    res.status(200).json({ success: true, data: announcement });
+  } catch (error) {
+    console.error("Get announcement error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update an announcement
+exports.updateAnnouncement = async (req, res) => {
+  try {
+    const announcement = await Announcement.findById(req.params.id);
+    if (!announcement) {
+      return res.status(404).json({ success: false, message: "Announcement not found" });
+    }
+
+    // Optionally check if req.user is author or admin (add your own logic)
+    // if (announcement.author.toString() !== req.user.id && req.user.role !== 'admin') {
+    //   return res.status(403).json({ success: false, message: "Not authorized" });
+    // }
+
+    const updateData = { ...req.body };
+
+    // Handle targetAudience if sent as JSON string
+    if (updateData.targetAudience && typeof updateData.targetAudience === "string") {
+      try {
+        updateData.targetAudience = JSON.parse(updateData.targetAudience);
+      } catch (e) {
+        // keep as is
+      }
+    }
+
+    // Handle jobDetails if type is job and nested fields exist
+    if (updateData.type === "job") {
+      const jobDetailsObj = extractJobDetails(req.body);
+      if (jobDetailsObj && Object.keys(jobDetailsObj).length) {
+        updateData.jobDetails = jobDetailsObj;
+      }
+    }
+
+    // If new files are uploaded, add them to existing attachments
+    if (req.files && req.files.length) {
+      const newAttachments = req.files.map((file) => ({
         filename: file.filename,
         originalName: file.originalname,
         path: file.path,
         size: file.size,
         mimeType: file.mimetype,
-        uploadedAt: new Date()
+        uploadedAt: new Date(),
       }));
+      updateData.$push = { attachments: { $each: newAttachments } };
+      delete updateData.attachments; // avoid overwriting
     }
-    
-    const announcementData = {
-      title,
-      content,
-      type: type || 'general',
-      visibility: visibility || 'private',
-      targetAudience: targetAudience || ['all'],
-      author: req.user._id,
-      priority: priority || 'medium',
-      attachments,
-      expiresAt: expiresAt ? new Date(expiresAt) : null
-    };
-    
-    // Add job details if type is job
-    if (type === 'job' && jobDetails) {
-      announcementData.jobDetails = jobDetails;
+
+    const updated = await Announcement.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate("author", "name email");
+
+    res.status(200).json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Update announcement error:", error);
+    // Clean up newly uploaded files if update fails
+    if (req.files) {
+      req.files.forEach((file) => {
+        fs.unlink(file.path, (err) => err && console.error("Failed to delete file:", file.path, err));
+      });
     }
-    
-    const announcement = new Announcement(announcementData);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Delete an announcement (soft delete or hard delete? Schema has isActive, we'll soft delete)
+exports.deleteAnnouncement = async (req, res) => {
+  try {
+    const announcement = await Announcement.findById(req.params.id);
+    if (!announcement) {
+      return res.status(404).json({ success: false, message: "Announcement not found" });
+    }
+
+    // Optionally check authorization
+
+    // Soft delete – set isActive to false
+    announcement.isActive = false;
     await announcement.save();
-    
-    // Populate author details
-    await announcement.populate('author', 'firstName lastName email');
-    
-    res.status(201).json({
-      success: true,
-      message: "Announcement created successfully",
-      data: announcement
-    });
-  } catch (error) {
-    console.error("Error creating announcement:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error creating announcement"
-    });
-  }
-};
 
-// Update announcement
-const updateAnnouncement = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
-    
-    const announcement = await Announcement.findById(id);
-    
-    if (!announcement) {
-      return res.status(404).json({
-        success: false,
-        message: "Announcement not found"
-      });
-    }
-    
-    // Check if user is the author or admin
-    if (announcement.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update this announcement"
-      });
-    }
-    
-    // Update announcement
-    Object.assign(announcement, updateData);
-    await announcement.save();
-    
-    await announcement.populate('author', 'firstName lastName email');
-    
-    res.status(200).json({
-      success: true,
-      message: "Announcement updated successfully",
-      data: announcement
-    });
-  } catch (error) {
-    console.error("Error updating announcement:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error updating announcement"
-    });
-  }
-};
+    // (Optional) also delete physical files from disk? Usually keep for history.
+    // For hard delete: await Announcement.findByIdAndDelete(req.params.id);
 
-// Delete announcement
-const deleteAnnouncement = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const announcement = await Announcement.findById(id);
-    
-    if (!announcement) {
-      return res.status(404).json({
-        success: false,
-        message: "Announcement not found"
-      });
-    }
-    
-    // Check if user is the author or admin
-    if (announcement.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to delete this announcement"
-      });
-    }
-    
-    await Announcement.findByIdAndDelete(id);
-    
-    res.status(200).json({
-      success: true,
-      message: "Announcement deleted successfully"
-    });
+    res.status(200).json({ success: true, message: "Announcement deleted successfully" });
   } catch (error) {
-    console.error("Error deleting announcement:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error deleting announcement"
-    });
+    console.error("Delete announcement error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
-};
-
-// Get single announcement
-const getAnnouncement = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const announcement = await Announcement.findById(id)
-      .populate('author', 'firstName lastName email');
-    
-    if (!announcement) {
-      return res.status(404).json({
-        success: false,
-        message: "Announcement not found"
-      });
-    }
-    
-    res.status(200).json({
-      success: true,
-      data: announcement
-    });
-  } catch (error) {
-    console.error("Error fetching announcement:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching announcement"
-    });
-  }
-};
-
-module.exports = {
-  getAllAnnouncements,
-  createAnnouncement,
-  updateAnnouncement,
-  deleteAnnouncement,
-  getAnnouncement
 };

@@ -3,6 +3,7 @@ import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
@@ -98,6 +99,10 @@ const routers = createBrowserRouter([
             {
                 path: "/landing",
                 element: <Landing />,
+            },
+            {
+                path: "/dashboard",
+                element: <Dashboard />,
             },
             {
                 path: "/posts",

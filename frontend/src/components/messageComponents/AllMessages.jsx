@@ -124,9 +124,62 @@ const AllMessages = ({ allMessage }) => {
                                                 : "pr-12"
                                         }`}
                                     >
-                                        <span className="">
-                                            {message?.message}
-                                        </span>
+                                        {/* Display message text if exists */}
+                                        {message?.message && (
+                                            <span className="">
+                                                {message?.message}
+                                            </span>
+                                        )}
+                                        
+                                        {/* Display file if exists */}
+                                        {message?.file && (
+                                            <div className="mt-2">
+                                                {message.file.mimeType.startsWith('image/') && (
+                                                    <img
+                                                        src={`http://localhost:9000/${message.file.path}`}
+                                                        alt={message.file.originalName}
+                                                        className="max-w-xs rounded-lg cursor-pointer hover:opacity-90 transition"
+                                                        onClick={() => window.open(`http://localhost:9000/${message.file.path}`, '_blank')}
+                                                    />
+                                                )}
+                                                
+                                                {message.file.mimeType.startsWith('video/') && (
+                                                    <video
+                                                        src={`http://localhost:9000/${message.file.path}`}
+                                                        controls
+                                                        className="max-w-xs rounded-lg"
+                                                    />
+                                                )}
+                                                
+                                                {message.file.mimeType.startsWith('audio/') && (
+                                                    <audio
+                                                        src={`http://localhost:9000/${message.file.path}`}
+                                                        controls
+                                                        className="max-w-xs"
+                                                    />
+                                                )}
+                                                
+                                                {!message.file.mimeType.startsWith('image/') && 
+                                                 !message.file.mimeType.startsWith('video/') && 
+                                                 !message.file.mimeType.startsWith('audio/') && (
+                                                    <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg cursor-pointer hover:bg-white/20 transition"
+                                                         onClick={() => window.open(`http://localhost:9000/${message.file.path}`, '_blank')}>
+                                                        <div className="text-white">
+                                                            {message.file.mimeType.includes('pdf') && 'PDF'}
+                                                            {message.file.mimeType.includes('word') && 'DOC'}
+                                                            {message.file.mimeType.includes('text') && 'TXT'}
+                                                            {!message.file.mimeType.includes('pdf') && 
+                                                             !message.file.mimeType.includes('word') && 
+                                                             !message.file.mimeType.includes('text') && 'FILE'}
+                                                        </div>
+                                                        <div className="text-white text-sm">
+                                                            {message.file.originalName}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        
                                         <span
                                             className="text-[11px] font-light absolute bottom-1 right-2 flex items-end gap-1.5"
                                             title={SimpleDateAndTime(
@@ -135,7 +188,7 @@ const AllMessages = ({ allMessage }) => {
                                         >
                                             {SimpleTime(message?.updatedAt)}
                                             {message?.sender?._id ===
-                                                adminId && (
+                                            adminId && (
                                                 <VscCheckAll
                                                     color="white"
                                                     fontSize={14}

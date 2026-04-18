@@ -3,6 +3,7 @@ const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const fs = require("fs"); // <-- added for directory check
 const { Server } = require("socket.io");
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
@@ -20,8 +21,15 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Ensure uploads directory exists (added without affecting other code)
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+	fs.mkdirSync(uploadsDir, { recursive: true });
+	console.log("Created uploads directory");
+}
+
 // Serve uploads folder
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/uploads", express.static(uploadsDir));
 
 const PORT = process.env.PORT || 3000;
 

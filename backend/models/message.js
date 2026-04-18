@@ -9,13 +9,20 @@ const messageSchema = mongoose.Schema(
 		},
 		message: {
 			type: String,
-			required: true,
+			required: false,
 			trim: true,
 		},
 		chat: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Chat",
 			required: true,
+		},
+		file: {
+			filename: String,
+			originalName: String,
+			path: String,
+			size: Number,
+			mimeType: String,
 		},
 	},
 	{

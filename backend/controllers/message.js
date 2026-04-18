@@ -3,24 +3,70 @@ const Message = require("../models/message");
 
 const createMessage = async (req, res) => {
 	const { message, chatId } = req.body;
-	if (message) {
-		const newMessage = await Message.create({
-			sender: req.user._id,
-			message: message,
-			chat: chatId,
+	
+	// Check if chatId is provided
+	if (!chatId) {
+		return res.status(400).json({ 
+			success: false,
+			message: "Chat ID is required" 
 		});
-		const chat = await Chat.findByIdAndUpdate(chatId, {
+	}
+	
+	// Check if either message text or file is provided
+	if (!message && !req.file) {
+		return res.status(400).json({ 
+			success: false,
+			message: "Message or file is required" 
+		});
+	}
+
+	const messageData = {
+		sender: req.user._id,
+		chat: chatId,
+	};
+
+	// Add message text if provided (and not empty)
+	if (message && message.trim()) {
+		messageData.message = message.trim();
+	}
+
+	// Add file info if file is uploaded
+	if (req.file) {
+		messageData.file = {
+			filename: req.file.filename,
+			originalName: req.file.originalname,
+			path: req.file.path,
+			size: req.file.size,
+			mimeType: req.file.mimetype,
+		};
+	}
+
+	try {
+		const newMessage = await Message.create(messageData);
+		
+		// Update chat with latest message
+		await Chat.findByIdAndUpdate(chatId, {
 			latestMessage: newMessage._id,
 		});
+		
+		// Populate full message details
 		const fullMessage = await Message.findById(newMessage._id)
 			.populate("sender", "-password")
 			.populate({
 				path: "chat",
 				populate: { path: "users groupAdmin", select: "-password" },
 			});
-		return res.status(201).json({ data: fullMessage });
-	} else {
-		return res.status(400).json({ message: "Message not provide" });
+		
+		return res.status(201).json({ 
+			success: true,
+			data: fullMessage 
+		});
+	} catch (error) {
+		console.error("Error creating message:", error);
+		return res.status(500).json({ 
+			success: false,
+			message: error.message || "Failed to create message" 
+		});
 	}
 };
 

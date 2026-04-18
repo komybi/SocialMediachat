@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import ReactDOM from "react-dom"; // ✅ needed for portal
 import {
   MdChat,
   MdPeople,
@@ -70,12 +71,11 @@ const Faculty = () => {
     (store) => store?.condition?.isUserSuggestionsBox
   );
   const authUserId = useSelector((store) => store?.auth?._id);
-  const myChats = useSelector((store) => store?.myChat?.chats); // for stats
+  const myChats = useSelector((store) => store?.myChat?.chats);
 
   const headerUserBox = useRef(null);
   const headerMenuBox = useRef(null);
 
-  // Header menu click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -105,14 +105,12 @@ const Faculty = () => {
     navigate("/signin");
   };
 
-  // socket connection
   useEffect(() => {
     if (!authUserId) return;
     socket.emit("setup", authUserId);
     socket.on("connected", () => dispatch(setSocketConnected(true)));
   }, [authUserId, dispatch]);
 
-  // socket message received
   useEffect(() => {
     selectedChatCompare = selectedChat;
     const messageHandler = (newMessageReceived) => {
@@ -133,7 +131,6 @@ const Faculty = () => {
     };
   });
 
-  // socket clear chat messages
   useEffect(() => {
     const clearChatHandler = (chatId) => {
       if (chatId === selectedChat?._id) {
@@ -147,7 +144,6 @@ const Faculty = () => {
     };
   });
 
-  // socket delete chat messages
   useEffect(() => {
     const deleteChatHandler = (chatId) => {
       dispatch(setChatDetailsBox(false));
@@ -163,7 +159,6 @@ const Faculty = () => {
     };
   });
 
-  // socket chat created
   useEffect(() => {
     const chatCreatedHandler = (chat) => {
       dispatch(addNewChat(chat));
@@ -175,7 +170,6 @@ const Faculty = () => {
     };
   });
 
-  // Load announcements
   const loadAnnouncements = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -197,22 +191,48 @@ const Faculty = () => {
 
   useEffect(() => {
     loadAnnouncements();
-  }, []);
+  }, [loadAnnouncements]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-indigo-900/30">
-      {/* FACULTY HEADER - Glassmorphism */}
-      <div className="w-full h-16 fixed top-0 z-50 md:h-20 backdrop-blur-md bg-white/10 border-b border-white/20 shadow-lg flex justify-between items-center px-4 md:px-6 font-semibold text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#0a1a2f]">
+      {/* Animated background orbs (matching SignUp) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float-slow"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float-medium"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float-fast"></div>
+        <div className="absolute bottom-10 right-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-pulse-slow"></div>
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute bg-white/10 rounded-full animate-particle"
+            style={{
+              width: `${Math.random() * 6 + 2}px`,
+              height: `${Math.random() * 6 + 2}px`,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${Math.random() * 8 + 5}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* FACULTY HEADER - Dark blue glassmorphism */}
+      <div className="w-full h-16 fixed top-0 z-50 md:h-20 backdrop-blur-md bg-white/5 border-b border-white/10 shadow-lg flex justify-between items-center px-4 md:px-6 font-semibold text-white">
         <div className="flex items-center gap-3">
           <Link to={"/"} className="transition-transform hover:scale-105">
             <img
               src="/logo.jpeg"
               alt="BHULink"
-              className="h-12 w-12 rounded-full shadow-md ring-2 ring-amber-400/50"
+              className="h-12 w-12 rounded-full shadow-md ring-2 ring-blue-400/50"
             />
           </Link>
           <Link to={"/"}>
-            <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+            <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">
               BHULink - Faculty
             </span>
           </Link>
@@ -221,13 +241,13 @@ const Faculty = () => {
         {user && (
           <div className="flex items-center gap-4">
             <button
-              className={`relative p-2 rounded-full transition-all duration-300 hover:bg-white/20 ${
+              className={`relative p-2 rounded-full transition-all duration-300 hover:bg-white/10 ${
                 newMessageRecieved.length > 0 ? "animate-pulse" : ""
               }`}
               title={`You have ${newMessageRecieved.length} new notifications`}
               onClick={() => dispatch(setNotificationBox(true))}
             >
-              <MdNotificationsActive className="text-2xl text-amber-300" />
+              <MdNotificationsActive className="text-2xl text-blue-300" />
               {newMessageRecieved.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg">
                   {newMessageRecieved.length}
@@ -235,19 +255,16 @@ const Faculty = () => {
               )}
             </button>
 
-            {/* Profile Section */}
             <div className="flex items-center gap-4">
               <div className="hidden md:block text-right">
-                <p className="text-sm text-white/70">Welcome back,</p>
+                <p className="text-sm text-white/60">Welcome back,</p>
                 <p className="font-semibold">{user.firstName} {user.lastName}</p>
               </div>
 
-              {/* Profile Picture with Dropdown */}
               <div className="relative">
-                {/* Profile Picture - Click to upload */}
                 <div
                   onClick={() => setShowProfileUpload(true)}
-                  className="w-12 h-12 rounded-full border-2 border-amber-400/50 cursor-pointer overflow-hidden hover:border-amber-400 transition-all"
+                  className="w-12 h-12 rounded-full border-2 border-blue-400/50 cursor-pointer overflow-hidden hover:border-blue-400 transition-all"
                   title="Click to change profile picture"
                 >
                   <img
@@ -266,7 +283,6 @@ const Faculty = () => {
                   />
                 </div>
 
-                {/* Dropdown Menu */}
                 <div
                   ref={headerMenuBox}
                   onClick={(e) => {
@@ -274,7 +290,7 @@ const Faculty = () => {
                     e.stopPropagation();
                     dispatch(setHeaderMenu(!isHeaderMenu));
                   }}
-                  className="ml-3 w-8 h-8 rounded-full bg-amber-400/80 hover:bg-amber-400 cursor-pointer flex items-center justify-center transition-all"
+                  className="ml-3 w-8 h-8 rounded-full bg-blue-500/70 hover:bg-blue-500 cursor-pointer flex items-center justify-center transition-all"
                   title="Menu"
                 >
                   <MdKeyboardArrowDown 
@@ -286,53 +302,45 @@ const Faculty = () => {
                   />
                 </div>
 
-                {/* Dropdown Content */}
                 {isHeaderMenu && (
-                  <div
-                    className="absolute top-14 right-0 w-56 bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50"
-                  >
-                    {/* Update Profile Picture */}
+                  <div className="absolute top-14 right-0 w-56 bg-[#112240]/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/20 overflow-hidden z-50">
                     <div
                       onClick={() => {
                         dispatch(setHeaderMenu(false));
                         setShowProfileUpload(true);
                       }}
-                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-200 hover:bg-white/10 transition-colors cursor-pointer"
                     >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={
-                            user?.image
-                              ? (user.image.startsWith('http')
-                                  ? user.image
-                                  : `${import.meta.env.VITE_BACKEND_URL}/${user.image}`)
-                              : "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
-                          }
-                          alt="profile"
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                        <span className="font-medium">Update Profile Picture</span>
-                      </div>
+                      <img
+                        src={
+                          user?.image
+                            ? (user.image.startsWith('http')
+                                ? user.image
+                                : `${import.meta.env.VITE_BACKEND_URL}/${user.image}`)
+                            : "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+                        }
+                        alt="profile"
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                      <span className="font-medium">Update Profile Picture</span>
                     </div>
 
-                    {/* View Profile */}
                     <div
                       onClick={() => {
                         dispatch(setHeaderMenu(false));
                         dispatch(setProfileDetail());
                       }}
-                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer border-t border-gray-200"
+                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-200 hover:bg-white/10 transition-colors cursor-pointer border-t border-white/10"
                     >
-                      <PiUserCircleLight className="text-xl text-gray-600" />
+                      <PiUserCircleLight className="text-xl" />
                       <span className="font-medium">View Profile</span>
                     </div>
 
-                    {/* Logout */}
                     <div
                       onClick={handleLogout}
-                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer border-t border-gray-200"
+                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-200 hover:bg-white/10 transition-colors cursor-pointer border-t border-white/10"
                     >
-                      <IoLogOutOutline className="text-xl text-gray-600" />
+                      <IoLogOutOutline className="text-xl" />
                       <span className="font-medium">Logout</span>
                     </div>
                   </div>
@@ -343,10 +351,9 @@ const Faculty = () => {
         )}
       </div>
 
-      {/* SPACER FOR HEADER */}
       <div className="h-16 md:h-20"></div>
 
-      {/* TAB BAR - Elegant underline style */}
+      {/* TAB BAR - Dark blue theme */}
       <div className="flex flex-wrap justify-center gap-1 md:gap-2 px-4 border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-16 md:top-20 z-40">
         {[
           { id: "home", label: "Home", icon: MdHome },
@@ -361,8 +368,8 @@ const Faculty = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-5 py-3 text-sm md:text-base font-medium transition-all duration-300 rounded-t-lg ${
               activeTab === tab.id
-                ? "text-amber-400 bg-white/10 shadow-inner border-b-2 border-amber-400"
-                : "text-gray-300 hover:text-white hover:bg-white/5"
+                ? "text-blue-300 bg-white/5 shadow-inner border-b-2 border-blue-400"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
             }`}
           >
             <tab.icon className="text-lg" />
@@ -372,14 +379,13 @@ const Faculty = () => {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* HOME TAB - Beautifully redesigned */}
+      <div className="container mx-auto px-4 py-6 max-w-7xl relative z-10">
+        {/* HOME TAB */}
         {activeTab === "home" && (
           <div className="space-y-8">
-            {/* Hero welcome card */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-900/60 via-purple-900/60 to-pink-900/60 backdrop-blur-sm border border-white/20 p-6 md:p-8 shadow-2xl">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -ml-32 -mb-32"></div>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0a192f]/80 via-[#112240]/80 to-[#0a1a2f]/80 backdrop-blur-sm border border-white/10 p-6 md:p-8 shadow-2xl">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl -ml-32 -mb-32"></div>
               <div className="relative z-10">
                 <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">
                   Welcome back, {user?.firstName || "Faculty"}!
@@ -390,64 +396,62 @@ const Faculty = () => {
               </div>
             </div>
 
-            {/* Stats cards with live data */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl transition-all hover:scale-105 hover:bg-white/15">
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl transition-all hover:scale-105 hover:bg-white/10">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white/60 text-sm">Total Chats</p>
                     <p className="text-3xl font-bold text-white">{myChats?.length || 0}</p>
                   </div>
-                  <div className="bg-amber-400/20 p-3 rounded-full">
-                    <MdChat className="text-2xl text-amber-400" />
+                  <div className="bg-blue-500/20 p-3 rounded-full">
+                    <MdChat className="text-2xl text-blue-400" />
                   </div>
                 </div>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl transition-all hover:scale-105 hover:bg-white/15">
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl transition-all hover:scale-105 hover:bg-white/10">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white/60 text-sm">Unread Messages</p>
                     <p className="text-3xl font-bold text-white">{newMessageRecieved?.length || 0}</p>
                   </div>
-                  <div className="bg-red-400/20 p-3 rounded-full">
+                  <div className="bg-red-500/20 p-3 rounded-full">
                     <MdMessage className="text-2xl text-red-400" />
                   </div>
                 </div>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl transition-all hover:scale-105 hover:bg-white/15">
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl transition-all hover:scale-105 hover:bg-white/10">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white/60 text-sm">Resources Shared</p>
                     <p className="text-3xl font-bold text-white">24</p>
                   </div>
-                  <div className="bg-emerald-400/20 p-3 rounded-full">
+                  <div className="bg-emerald-500/20 p-3 rounded-full">
                     <MdLibraryBooks className="text-2xl text-emerald-400" />
                   </div>
                 </div>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl transition-all hover:scale-105 hover:bg-white/15">
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl transition-all hover:scale-105 hover:bg-white/10">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white/60 text-sm">Active Now</p>
                     <p className="text-3xl font-bold text-white">12</p>
                   </div>
-                  <div className="bg-blue-400/20 p-3 rounded-full">
-                    <MdPeople className="text-2xl text-blue-400" />
+                  <div className="bg-cyan-500/20 p-3 rounded-full">
+                    <MdPeople className="text-2xl text-cyan-400" />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick actions & features */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+              <div className="bg-[#112240]/60 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
                 <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <MdAddBox className="text-amber-400" /> Quick Actions
+                  <MdAddBox className="text-blue-400" /> Quick Actions
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => setActiveTab("announcements")}
-                    className="px-4 py-2 bg-indigo-500/20 text-indigo-300 rounded-lg hover:bg-indigo-500/30 transition"
+                    className="px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition"
                   >
                     <MdAnnouncement className="inline mr-2" />
                     Create Announcement
@@ -461,7 +465,7 @@ const Faculty = () => {
                   </button>
                   <button
                     onClick={() => setActiveTab("chat")}
-                    className="px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition"
+                    className="px-4 py-2 bg-cyan-500/20 text-cyan-300 rounded-lg hover:bg-cyan-500/30 transition"
                   >
                     <MdChat className="inline mr-2" />
                     Start Chat
@@ -483,9 +487,9 @@ const Faculty = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+              <div className="bg-[#112240]/60 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
                 <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <MdNotificationsActive className="text-amber-400" /> Recent Activity
+                  <MdNotificationsActive className="text-blue-400" /> Recent Activity
                 </h2>
                 <div className="space-y-3 text-white/70">
                   <p className="flex items-center gap-2 text-sm">
@@ -504,8 +508,7 @@ const Faculty = () => {
               </div>
             </div>
 
-            {/* Motivational quote or tip */}
-            <div className="text-center py-6 text-white/50 text-sm italic">
+            <div className="text-center py-6 text-white/40 text-sm italic">
               "Empowering education through seamless collaboration."
             </div>
           </div>
@@ -514,23 +517,23 @@ const Faculty = () => {
         {/* ANNOUNCEMENTS TAB */}
         {activeTab === "announcements" && (
           <div className="space-y-6">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <MdAnnouncement className="text-amber-400" />
+                  <MdAnnouncement className="text-blue-400" />
                   Announcements ({announcements.length})
                 </h2>
                 <button
                   onClick={() => setShowAnnouncementModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-amber-500/20 backdrop-blur-md rounded-xl border border-amber-500/30 hover:bg-amber-500/30 transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-500/30 hover:bg-blue-500/30 transition"
                 >
-                  <MdAdd className="text-amber-300" />
-                  <span className="text-amber-300">Create Announcement</span>
+                  <MdAdd className="text-blue-300" />
+                  <span className="text-blue-300">Create Announcement</span>
                 </button>
               </div>
               
               {announcements.length === 0 ? (
-                <div className="text-center py-12 text-gray-300">
+                <div className="text-center py-12 text-gray-400">
                   <MdAnnouncement className="text-5xl mx-auto mb-3 opacity-50" />
                   <p>No announcements have been created yet.</p>
                   <p className="text-sm mt-2">Click "Create Announcement" to get started.</p>
@@ -589,30 +592,30 @@ const Faculty = () => {
           </div>
         )}
 
-        {/* CHAT TAB - Enhanced container styling */}
+        {/* CHAT TAB */}
         {activeTab === "chat" && (
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden shadow-2xl">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
             <div className="flex flex-wrap w-full min-h-[80vh]">
               {authUserId ? (
                 <>
                   <div
                     className={`${
                       selectedChat ? "hidden sm:block" : "block"
-                    } w-full sm:w-[40%] lg:w-[35%] border-r border-white/20 bg-black/20`}
+                    } w-full sm:w-[40%] lg:w-[35%] border-r border-white/10 bg-black/20`}
                   >
                     <div className="relative h-full">
                       <div className="absolute bottom-4 right-4 flex gap-3 z-10">
                         <button
                           title="Friend Suggestions"
                           onClick={() => dispatch(setUserSuggestionsBox())}
-                          className="p-2 bg-amber-500/80 rounded-full shadow-lg hover:scale-110 transition text-white"
+                          className="p-2 bg-blue-500/80 rounded-full shadow-lg hover:scale-110 transition text-white"
                         >
                           <MdPeople size={24} />
                         </button>
                         <button
                           title="New Chat"
                           onClick={() => dispatch(setUserSearchBox())}
-                          className="p-2 bg-blue-500/80 rounded-full shadow-lg hover:scale-110 transition text-white"
+                          className="p-2 bg-cyan-500/80 rounded-full shadow-lg hover:scale-110 transition text-white"
                         >
                           <MdChat size={24} />
                         </button>
@@ -646,13 +649,13 @@ const Faculty = () => {
                     <div className="flex gap-4 justify-center">
                       <Link
                         to="/signin"
-                        className="px-6 py-2 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition shadow-lg"
+                        className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition shadow-lg"
                       >
                         Sign In
                       </Link>
                       <Link
                         to="/signup"
-                        className="px-6 py-2 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition shadow-lg"
+                        className="px-6 py-2 bg-cyan-600 text-white rounded-full hover:bg-cyan-700 transition shadow-lg"
                       >
                         Sign Up
                       </Link>
@@ -678,22 +681,62 @@ const Faculty = () => {
           </div>
         )}
 
-        {/* Profile Picture Upload Modal */}
         {showProfileUpload && (
           <ProfilePictureUpload onClose={() => setShowProfileUpload(false)} />
         )}
 
-        {/* Announcement Modal */}
-        {showAnnouncementModal && (
+        {/* ✅ Announcement modal rendered via PORTAL so it's fully visible above header */}
+        {showAnnouncementModal && ReactDOM.createPortal(
           <AnnouncementCreate
             onClose={() => setShowAnnouncementModal(false)}
             onAnnouncementCreated={(newAnnouncement) => {
               setAnnouncements(prev => [newAnnouncement, ...prev]);
               toast.success("Announcement created successfully!");
             }}
-          />
+          />,
+          document.body
         )}
       </div>
+
+      <style>{`
+        @keyframes float-slow {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(20px, -20px) scale(1.05); }
+        }
+        @keyframes float-medium {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-20px, 20px) scale(1.1); }
+        }
+        @keyframes float-fast {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(15px, 15px) scale(1.08); }
+        }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.2; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(1.05); }
+        }
+        @keyframes particle {
+          0% { transform: translateY(0) translateX(0); opacity: 0; }
+          10% { opacity: 0.5; }
+          90% { opacity: 0.5; }
+          100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+        }
+        .animate-float-slow {
+          animation: float-slow 12s ease-in-out infinite;
+        }
+        .animate-float-medium {
+          animation: float-medium 8s ease-in-out infinite;
+        }
+        .animate-float-fast {
+          animation: float-fast 6s ease-in-out infinite;
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 8s ease-in-out infinite;
+        }
+        .animate-particle {
+          animation: particle linear infinite;
+        }
+      `}</style>
     </div>
   );
 };

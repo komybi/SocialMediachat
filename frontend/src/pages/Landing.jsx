@@ -12,7 +12,14 @@ import {
   MdCalendarToday,
   MdTrendingUp,
   MdSchool,
-  MdLaptop
+  MdLaptop,
+  MdLocationOn,
+  MdGroups,
+  MdEmojiEvents,
+  MdLibraryBooks,
+  MdCelebration,
+  MdStar,
+  MdFormatQuote
 } from "react-icons/md";
 
 const Landing = () => {
@@ -58,6 +65,78 @@ const Landing = () => {
       badge: "Register Now",
       badgeColor: "bg-emerald-500/20 text-emerald-300"
     }
+  ];
+
+  // Community images data for gallery
+  const communityImages = [
+    {
+      id: 1,
+      src: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
+      title: "Collaborative Learning",
+      description: "Students working together on innovative projects",
+      icon: <MdGroups className="text-amber-400" />,
+      location: "Innovation Hub"
+    },
+    {
+      id: 2,
+      src: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+      title: "Annual Cultural Fest",
+      description: "Celebrating diversity and talent across campus",
+      icon: <MdCelebration className="text-purple-400" />,
+      location: "Main Auditorium"
+    },
+    {
+      id: 3,
+      src: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80",
+      title: "Smart Library Sessions",
+      description: "24/7 access to digital and physical resources",
+      icon: <MdLibraryBooks className="text-blue-400" />,
+      location: "Central Library"
+    },
+    {
+      id: 4,
+      src: "https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80",
+      title: "Campus Life",
+      description: "Modern facilities and vibrant student community",
+      icon: <MdLocationOn className="text-emerald-400" />,
+      location: "University Campus"
+    }
+  ];
+
+  // Testimonials data
+  const testimonials = [
+    {
+      id: 1,
+      name: "Priya Sharma",
+      role: "Computer Science, 3rd Year",
+      quote: "BHULink has completely transformed how I connect with my classmates and professors. The real-time chat and event updates keep me in the loop always!",
+      avatar: "https://randomuser.me/api/portraits/women/68.jpg",
+      rating: 5
+    },
+    {
+      id: 2,
+      name: "Rahul Verma",
+      role: "MBA, 2nd Year",
+      quote: "From group projects to club activities, this platform makes everything seamless. The media sharing feature is a game-changer for our presentations.",
+      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      rating: 5
+    },
+    {
+      id: 3,
+      name: "Dr. Anjali Mehta",
+      role: "Professor, Mathematics",
+      quote: "As a faculty member, I love how easy it is to share resources and communicate with students. BHULink bridges the gap between academia and community.",
+      avatar: "https://randomuser.me/api/portraits/women/89.jpg",
+      rating: 5
+    }
+  ];
+
+  // Campus stats
+  const campusStats = [
+    { value: "12K+", label: "Active Students", icon: <MdPeople />, color: "from-blue-400 to-blue-600" },
+    { value: "250+", label: "Student Clubs", icon: <MdGroup />, color: "from-purple-400 to-purple-600" },
+    { value: "50+", label: "Events Yearly", icon: <MdEmojiEvents />, color: "from-amber-400 to-amber-600" },
+    { value: "98%", label: "Placement Rate", icon: <MdTrendingUp />, color: "from-emerald-400 to-emerald-600" }
   ];
 
   return (
@@ -114,6 +193,18 @@ const Landing = () => {
           50% { border-color: rgba(255,215,0,0.5); box-shadow: 0 0 20px 5px rgba(255,215,0,0.3); }
           100% { border-color: rgba(255,255,255,0.1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
         }
+        @keyframes imageReveal {
+          0% { opacity: 0; transform: scale(1.05); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideInFromBottom {
+          0% { opacity: 0; transform: translateY(40px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
         .animate-fadeInUp {
           animation: fadeInUp 0.8s ease-out forwards;
         }
@@ -135,11 +226,32 @@ const Landing = () => {
         .animate-borderGlow {
           animation: borderGlow 3s ease-in-out infinite;
         }
+        .animate-imageReveal {
+          animation: imageReveal 0.6s ease-out forwards;
+        }
+        .animate-slideInFromBottom {
+          animation: slideInFromBottom 0.8s ease-out forwards;
+        }
+        .shimmer {
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite;
+        }
         .delay-100 { animation-delay: 100ms; }
         .delay-200 { animation-delay: 200ms; }
         .delay-300 { animation-delay: 300ms; }
         .delay-400 { animation-delay: 400ms; }
         .delay-500 { animation-delay: 500ms; }
+        .delay-600 { animation-delay: 600ms; }
+        .image-card {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .image-card:hover {
+          transform: translateY(-8px) scale(1.02);
+        }
+        .image-overlay {
+          background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+        }
       `}</style>
 
       <div className="absolute inset-0 bg-black/20 z-0"></div>
@@ -151,11 +263,13 @@ const Landing = () => {
       <div className="absolute bottom-40 right-1/3 w-64 h-64 bg-amber-400/20 rounded-full animate-floatReverse delay-300 blur-3xl"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full animate-glowPulse blur-3xl"></div>
 
-      {/* Floating Particles */}
+      {/* More Floating Particles */}
       <div className="absolute top-20 left-[15%] w-2 h-2 bg-white/40 rounded-full animate-float"></div>
       <div className="absolute bottom-32 right-[20%] w-3 h-3 bg-amber-300/40 rounded-full animate-floatReverse delay-100"></div>
       <div className="absolute top-1/3 right-[10%] w-1.5 h-1.5 bg-blue-300/40 rounded-full animate-float delay-200"></div>
       <div className="absolute bottom-1/4 left-[30%] w-2.5 h-2.5 bg-purple-300/40 rounded-full animate-floatReverse delay-300"></div>
+      <div className="absolute top-1/2 left-[5%] w-1 h-1 bg-white/30 rounded-full animate-float delay-400"></div>
+      <div className="absolute bottom-[15%] right-[12%] w-2 h-2 bg-emerald-300/40 rounded-full animate-floatReverse delay-500"></div>
 
       {/* Subtle Grid Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width=%2260%22%20height=%2260%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cdefs%3E%3Cpattern%20id=%22grid%22%20width=%2260%22%20height=%2260%22%20patternUnits=%22userSpaceOnUse%22%3E%3Cpath%20d=%22M%2060%200%20L%200%200%200%2060%22%20fill=%22none%22%20stroke=%22rgba(255,255,255,0.03)%22%20stroke-width=%221%22/%3E%3C/pattern%3E%3C/defs%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20fill=%22url(%23grid)%22/%3E%3C/svg%3E')] opacity-30"></div>
@@ -183,7 +297,7 @@ const Landing = () => {
               The Digital Campus Hub
             </p>
             <p className="text-xl md:text-2xl text-gray-200 mb-6 max-w-3xl mx-auto">
-              Connect, share, and chat with classmates, professors, and alumni — all in one place.
+              Connect, share, and chat with classmates, professors, and all in one place.
             </p>
             <div className="flex justify-center gap-6 text-sm font-mono text-blue-200/70">
               <span className="flex items-center gap-1"><MdTrendingUp className="text-emerald-400" /> 5,000+ students online</span>
@@ -226,6 +340,23 @@ const Landing = () => {
             </div>
           </div>
 
+          {/* Campus Stats Section with animations */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16 animate-fadeInUp delay-150">
+            {campusStats.map((stat, index) => (
+              <div
+                key={stat.label}
+                className="group bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/10 transition-all duration-300 hover:-translate-y-2"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}>
+                  <div className="text-white text-xl">{stat.icon}</div>
+                </div>
+                <div className="text-2xl md:text-3xl font-bold text-white">{stat.value}</div>
+                <div className="text-gray-300 text-sm">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
           {/* Main CTA Buttons with enhanced hover effects */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16 animate-fadeInUp delay-300">
             <Link
@@ -250,38 +381,113 @@ const Landing = () => {
             </Link>
           </div>
 
-          {/* Quick Access Section with glowing border */}
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 md:p-10 border border-white/20 shadow-2xl mb-12 animate-fadeInUp delay-400 hover:animate-borderGlow transition-all duration-500">
-            <h3 className="text-2xl md:text-3xl font-bold mb-6 text-center text-white">Quick Access</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Link
-                to="/signup"
-                className="flex items-center justify-center gap-4 px-6 py-5 bg-gradient-to-r from-amber-600/20 to-amber-500/20 border border-amber-400/50 rounded-2xl hover:from-amber-600/30 hover:to-amber-500/30 transition-all duration-300 group hover:scale-105"
-              >
-                <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform group-hover:shadow-amber-500/30 shadow-lg">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
+          {/* NEW: University Community Image Gallery Section with animations */}
+          <div className="mb-16 relative">
+            <div className="text-center mb-10 animate-fadeInUp">
+              <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 mb-4">
+                <MdPeople className="text-purple-400 text-xl animate-pulse" />
+                <span className="text-purple-300 font-semibold tracking-wide">Campus Life</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-amber-300 via-purple-300 to-blue-300 bg-clip-text text-transparent">
+                Our Vibrant Community
+              </h2>
+              <p className="text-gray-300 max-w-2xl mx-auto">
+                Experience the energy, diversity, and spirit of our university through these moments
+              </p>
+              <div className="w-24 h-1 bg-gradient-to-r from-amber-500 to-purple-500 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {communityImages.map((image, index) => (
+                <div
+                  key={image.id}
+                  className="group image-card cursor-pointer rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-500 animate-fadeInUp"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="relative overflow-hidden h-64">
+                    <img
+                      src={image.src}
+                      alt={image.title}
+                      className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:rotate-1"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 image-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                      <div className="flex items-center gap-2 text-white text-sm">
+                        {image.icon}
+                        <span>{image.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
+                      {image.title}
+                    </h3>
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      {image.description}
+                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-amber-400/80">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                      <span>Discover more</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <div className="font-bold text-xl text-amber-300">New User</div>
-                  <div className="text-gray-300 text-sm">Create your student account</div>
+              ))}
+            </div>
+
+            <div className="flex justify-center mt-8">
+              <button className="group flex items-center gap-2 text-gray-300 hover:text-white transition-all duration-300 px-6 py-2 rounded-full bg-white/5 border border-white/20 hover:bg-white/10 hover:scale-105 transform">
+                <span>Explore Campus Gallery</span>
+                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* NEW: Testimonials Section */}
+          <div className="mb-16 relative">
+            <div className="text-center mb-10 animate-fadeInUp">
+              <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 mb-4">
+                <MdStar className="text-yellow-400 text-xl animate-pulse" />
+                <span className="text-yellow-300 font-semibold tracking-wide">Student Voices</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-amber-300 via-purple-300 to-blue-300 bg-clip-text text-transparent">
+                What Our Community Says
+              </h2>
+              <p className="text-gray-300 max-w-2xl mx-auto">
+                Real stories from students and faculty who use BHULink every day
+              </p>
+              <div className="w-24 h-1 bg-gradient-to-r from-amber-500 to-purple-500 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {testimonials.map((testimonial, index) => (
+                <div
+                  key={testimonial.id}
+                  className="group bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 animate-fadeInUp"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <MdFormatQuote className="text-4xl text-amber-400/30 mb-4 group-hover:text-amber-400/50 transition-colors" />
+                  <p className="text-gray-200 leading-relaxed mb-6 italic">"{testimonial.quote}"</p>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={testimonial.avatar}
+                      alt={testimonial.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-amber-400/50"
+                    />
+                    <div>
+                      <div className="font-semibold text-white">{testimonial.name}</div>
+                      <div className="text-xs text-amber-300">{testimonial.role}</div>
+                      <div className="flex gap-0.5 mt-1">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <MdStar key={i} className="text-yellow-400 text-xs" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </Link>
-              <Link
-                to="/signin"
-                className="flex items-center justify-center gap-4 px-6 py-5 bg-gradient-to-r from-blue-600/20 to-blue-500/20 border border-blue-400/50 rounded-2xl hover:from-blue-600/30 hover:to-blue-500/30 transition-all duration-300 group hover:scale-105"
-              >
-                <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform group-hover:shadow-blue-500/30 shadow-lg">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <div className="font-bold text-xl text-blue-300">Returning</div>
-                  <div className="text-gray-300 text-sm">Sign in to your dashboard</div>
-                </div>
-              </Link>
+              ))}
             </div>
           </div>
 

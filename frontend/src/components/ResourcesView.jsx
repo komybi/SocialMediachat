@@ -83,15 +83,15 @@ const ResourcesView = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#0a1a2f] p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
-              <MdLibraryBooks className="text-amber-400" />
+              <MdLibraryBooks className="text-blue-400" />
               Faculty Resources
             </h1>
-            <p className="text-indigo-200 mt-1">
+            <p className="text-blue-200 mt-1">
               Welcome back, {CURRENT_FACULTY.name} • {CURRENT_FACULTY.department}
             </p>
           </div>
@@ -105,7 +105,7 @@ const ResourcesView = () => {
           <div className="lg:col-span-1">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
               <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <MdShare className="text-amber-400" />
+                <MdShare className="text-blue-400" />
                 Share a Resource
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,7 +116,7 @@ const ResourcesView = () => {
                     name="title"
                     value={formData.title}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder="e.g., Machine Learning Slides"
                   />
                 </div>
@@ -127,14 +127,14 @@ const ResourcesView = () => {
                     rows="3"
                     value={formData.description}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder="Brief explanation..."
                   />
                 </div>
                 <div>
                   <label className="block text-gray-200 text-sm font-medium mb-1">Or Upload File</label>
                   <label className="flex items-center gap-3 w-full px-4 py-2 rounded-xl bg-white/20 border border-white/30 cursor-pointer hover:bg-white/30 transition">
-                    <MdAttachFile className="text-amber-400" />
+                    <MdAttachFile className="text-blue-400" />
                     <span className="text-white text-sm">
                       {formData.fileName ? formData.fileName : 'Choose file (PDF, image, etc.)'}
                     </span>
@@ -159,14 +159,14 @@ const ResourcesView = () => {
                     name="link"
                     value={formData.link}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder="https://drive.google.com/..."
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 rounded-xl font-bold text-white shadow-lg transition-all transform hover:-translate-y-1 disabled:opacity-50"
+                  className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-xl font-bold text-white shadow-lg transition-all transform hover:-translate-y-1 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Sharing...' : '📤 Share Resource'}
                 </button>
@@ -178,7 +178,7 @@ const ResourcesView = () => {
           <div className="lg:col-span-2">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
               <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <MdDescription />
+                <MdDescription className="text-blue-400" />
                 My Shared Resources
               </h2>
               {resources.length === 0 ? (
@@ -193,7 +193,7 @@ const ResourcesView = () => {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-                            <MdLink className="text-amber-400" />
+                            <MdLink className="text-blue-400" />
                             {res.title}
                           </h3>
                           <p className="text-gray-200 mt-1">{res.description}</p>
@@ -201,12 +201,12 @@ const ResourcesView = () => {
                             <a
                               href={res.fileData}
                               download={res.fileName}
-                              className="inline-block mt-2 text-amber-300 hover:text-amber-200 underline text-sm"
+                              className="inline-block mt-2 text-blue-300 hover:text-blue-200 underline text-sm"
                             >
                               📎 Download {res.fileName}
                             </a>
                           ) : res.link && res.link !== '#' && (
-                            <a href={res.link} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-amber-300 hover:text-amber-200 underline text-sm">
+                            <a href={res.link} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-blue-300 hover:text-blue-200 underline text-sm">
                               Open resource ↗
                             </a>
                           )}
