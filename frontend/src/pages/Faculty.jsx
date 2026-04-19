@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import ReactDOM from "react-dom"; // ✅ needed for portal
+import ReactDOM from "react-dom";
 import {
   MdChat,
   MdPeople,
@@ -14,6 +14,8 @@ import {
   MdMessage,
   MdAnnouncement,
   MdAdd,
+  MdEdit,
+  MdDelete
 } from "react-icons/md";
 import { PiUserCircleLight } from "react-icons/pi";
 import { IoLogOutOutline } from "react-icons/io5";
@@ -189,13 +191,18 @@ const Faculty = () => {
     }
   };
 
+  const handleEditAnnouncement = (announcement) => {
+    // Implement your edit functionality here
+    console.log("Editing announcement:", announcement);
+  };
+
   useEffect(() => {
     loadAnnouncements();
-  }, [loadAnnouncements]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#0a1a2f]">
-      {/* Animated background orbs (matching SignUp) */}
+      {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float-slow"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float-medium"></div>
@@ -221,7 +228,7 @@ const Faculty = () => {
         ))}
       </div>
 
-      {/* FACULTY HEADER - Dark blue glassmorphism */}
+      {/* FACULTY HEADER */}
       <div className="w-full h-16 fixed top-0 z-50 md:h-20 backdrop-blur-md bg-white/5 border-b border-white/10 shadow-lg flex justify-between items-center px-4 md:px-6 font-semibold text-white">
         <div className="flex items-center gap-3">
           <Link to={"/"} className="transition-transform hover:scale-105">
@@ -353,7 +360,7 @@ const Faculty = () => {
 
       <div className="h-16 md:h-20"></div>
 
-      {/* TAB BAR - Dark blue theme */}
+      {/* TAB BAR */}
       <div className="flex flex-wrap justify-center gap-1 md:gap-2 px-4 border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-16 md:top-20 z-40">
         {[
           { id: "home", label: "Home", icon: MdHome },
@@ -572,8 +579,51 @@ const Faculty = () => {
                           
                           <div className="flex items-center gap-4 text-sm text-gray-400">
                             <span>By {announcement.author?.firstName} {announcement.author?.lastName}</span>
-                            <span>Target: {announcement.targetAudience?.join(', ') || 'All'}</span>
+                            <span>Target: {announcement.targetAudience?.join(", ") || "All"}</span>
                             <span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              onClick={() => handleEditAnnouncement(announcement)}
+                              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                            >
+                              <MdEdit size={16} />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this announcement?")) {
+                                  const deleteAnnouncement = async () => {
+                                    try {
+                                      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/announcement/${announcement._id}`, {
+                                        method: "DELETE",
+                                        headers: {
+                                          "Authorization": `Bearer ${localStorage.getItem("token")}`
+                                        }
+                                      });
+
+                                      const result = await response.json();
+                                      
+                                      if (result.success) {
+                                        toast.success("Announcement deleted successfully!");
+                                        setAnnouncements(prev => prev.filter(ann => ann._id !== announcement._id));
+                                      } else {
+                                        toast.error(result.message || "Failed to delete announcement");
+                                      }
+                                    } catch (error) {
+                                      console.error("Error deleting announcement:", error);
+                                      toast.error("Failed to delete announcement");
+                                    }
+                                  };
+
+                                  deleteAnnouncement();
+                                }
+                              }}
+                              className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                            >
+                              <MdDelete size={16} />
+                              Delete
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -685,7 +735,7 @@ const Faculty = () => {
           <ProfilePictureUpload onClose={() => setShowProfileUpload(false)} />
         )}
 
-        {/* ✅ Announcement modal rendered via PORTAL so it's fully visible above header */}
+        {/* Announcement modal rendered via PORTAL */}
         {showAnnouncementModal && ReactDOM.createPortal(
           <AnnouncementCreate
             onClose={() => setShowAnnouncementModal(false)}

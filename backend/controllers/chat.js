@@ -144,6 +144,65 @@ const addToGroup = async (req, res) => {
 	}
 };
 
+const uploadFile = async (req, res) => {
+	try {
+		const { chatId } = req.body;
+		
+		if (!req.file) {
+			return res.status(400).json({ message: "No file uploaded" });
+		}
+		
+		if (!chatId) {
+			return res.status(400).json({ message: "Chat ID is required" });
+		}
+		
+		// Create file URL
+		const fileUrl = `http://localhost:9000/uploads/${req.file.filename}`;
+		
+		// Create message with file
+		const message = await Message.create({
+			sender: req.user._id,
+			message: `📎 ${req.file.originalname}\n${fileUrl}`,
+			chat: chatId,
+			file: {
+				filename: req.file.filename,
+				originalName: req.file.originalname,
+				path: fileUrl,
+				size: req.file.size,
+				mimeType: req.file.mimetype
+			}
+		});
+		
+		// Populate message details
+		const fullMessage = await Message.findById(message._id)
+			.populate("sender", "firstName lastName email")
+			.populate("chat");
+		
+		// Update latest message in chat
+		await Chat.findByIdAndUpdate(chatId, {
+			latestMessage: message._id
+		});
+		
+		res.status(200).json({
+			message: "File uploaded successfully",
+			file: {
+				filename: req.file.filename,
+				originalName: req.file.originalname,
+				url: fileUrl,
+				path: fileUrl,
+				size: req.file.size,
+				mimetype: req.file.mimetype,
+				mimeType: req.file.mimetype
+			},
+			messageData: fullMessage
+		});
+		
+	} catch (error) {
+		console.error("Upload file error:", error);
+		res.status(500).json({ message: "Failed to upload file" });
+	}
+};
+
 module.exports = {
 	postChat,
 	getChat,
@@ -152,4 +211,5 @@ module.exports = {
 	renameGroup,
 	removeFromGroup,
 	addToGroup,
+	uploadFile,
 };

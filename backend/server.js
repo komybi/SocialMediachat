@@ -183,6 +183,7 @@ app.use("/api/post", postRouter);
 app.use("/api/reel", reelRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/announcement", announcementRouter);
+app.use("/api/job-application", require("./routes/jobApplication"));
 
 // Invalid routes
 app.all("*", (req, res) => {

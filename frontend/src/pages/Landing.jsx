@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   MdChat,
@@ -23,49 +23,108 @@ import {
 } from "react-icons/md";
 
 const Landing = () => {
-  // Announcement data
-  const announcements = [
-    {
-      id: 1,
-      title: "🎓 Annual Tech Fest 2025",
-      date: "March 25, 2025",
-      description: "Register now for the biggest tech competition of the year! Prizes worth ₹1,00,000.",
-      icon: <MdCampaign className="text-2xl" />,
-      color: "from-amber-400 to-orange-500",
-      badge: "Featured",
-      badgeColor: "bg-amber-500/20 text-amber-300"
-    },
-    {
-      id: 2,
-      title: "📚 Library Extended Hours",
-      date: "March 20, 2025",
-      description: "Exam week: Library now open 24/7 from March 20th to April 5th.",
-      icon: <MdEvent className="text-2xl" />,
-      color: "from-blue-400 to-cyan-500",
-      badge: "Important",
-      badgeColor: "bg-blue-500/20 text-blue-300"
-    },
-    {
-      id: 3,
-      title: "🤝 Freshers' Orientation",
-      date: "April 1, 2025",
-      description: "Welcome new batch of 2025! Join us for campus tours and meet your mentors.",
-      icon: <MdSchool className="text-2xl" />,
-      color: "from-purple-400 to-pink-500",
-      badge: "Upcoming",
-      badgeColor: "bg-purple-500/20 text-purple-300"
-    },
-    {
-      id: 4,
-      title: "💻 Hackathon 2025",
-      date: "April 10-12, 2025",
-      description: "48-hour coding challenge. Build innovative solutions with your team.",
-      icon: <MdLaptop className="text-2xl" />,
-      color: "from-emerald-400 to-teal-500",
-      badge: "Register Now",
-      badgeColor: "bg-emerald-500/20 text-emerald-300"
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [applicationForm, setApplicationForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    cvFile: null,
+    additionalInfo: ''
+  });
+
+  // Handle job application submission
+  const handleApplicationSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('fullName', applicationForm.fullName);
+      formData.append('email', applicationForm.email);
+      formData.append('phone', applicationForm.phone);
+      formData.append('additionalInfo', applicationForm.additionalInfo);
+      formData.append('announcementId', selectedAnnouncement._id);
+      formData.append('announcementTitle', selectedAnnouncement.title);
+      
+      if (applicationForm.cvFile) {
+        formData.append('cv', applicationForm.cvFile);
+      }
+      
+      // Submit application (you'd need to create this API endpoint)
+      const response = await fetch('http://localhost:9000/api/job-application', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('Application submitted successfully! We will contact you soon.');
+        // Reset form
+        setApplicationForm({
+          fullName: '',
+          email: '',
+          phone: '',
+          cvFile: null,
+          additionalInfo: ''
+        });
+        setShowModal(false);
+      } else {
+        alert('Failed to submit application. Please try again.');
+      }
+    } catch (error) {
+      console.error('Application submission error:', error);
+      alert('An error occurred while submitting your application.');
     }
-  ];
+  };
+
+  // Fetch announcements from database
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await fetch('http://localhost:9000/api/announcement/public');
+        const result = await response.json();
+        if (result.success) {
+          // Transform database data to match card format
+          const transformedAnnouncements = result.data.map((announcement, index) => {
+            const priorityColors = {
+              high: { color: "from-red-400 to-orange-500", badge: "Urgent", badgeColor: "bg-red-500/20 text-red-300" },
+              medium: { color: "from-blue-400 to-cyan-500", badge: "Important", badgeColor: "bg-blue-500/20 text-blue-300" },
+              low: { color: "from-green-400 to-emerald-500", badge: "Info", badgeColor: "bg-green-500/20 text-green-300" }
+            };
+            
+            const priorityConfig = priorityColors[announcement.priority] || priorityColors.medium;
+            
+            return {
+              id: announcement._id,
+              title: announcement.title,
+              date: new Date(announcement.createdAt).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }),
+              description: announcement.content,
+              icon: <MdCampaign className="text-2xl" />,
+              color: priorityConfig.color,
+              badge: priorityConfig.badge,
+              badgeColor: priorityConfig.badgeColor
+            };
+          });
+          setAnnouncements(transformedAnnouncements);
+        }
+      } catch (error) {
+        console.error('Failed to fetch announcements:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
 
   // Community images data for gallery
   const communityImages = [
@@ -502,49 +561,105 @@ const Landing = () => {
                 Announcement Board
               </h2>
               <p className="text-gray-300 max-w-2xl mx-auto">
-                Latest news, events, and important updates from the campus
+                Latest news, events, and important updates from campus
               </p>
               <div className="w-24 h-1 bg-gradient-to-r from-amber-500 to-purple-500 mx-auto mt-4 rounded-full"></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {announcements.map((announcement, index) => (
-                <div
-                  key={announcement.id}
-                  className="group bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:bg-white/10 cursor-pointer animate-fadeInUp"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className={`h-1.5 bg-gradient-to-r ${announcement.color} group-hover:h-2 transition-all duration-300`}></div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${announcement.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300 group-hover:rotate-3`}>
-                        {announcement.icon}
+              {loading ? (
+                // Loading skeleton cards
+                [...Array(4)].map((_, index) => (
+                  <div
+                    key={`skeleton-${index}`}
+                    className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden animate-pulse"
+                  >
+                    <div className="h-1.5 bg-gray-600"></div>
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 bg-gray-600 rounded-xl"></div>
+                        <div className="w-16 h-6 bg-gray-600 rounded-full"></div>
                       </div>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${announcement.badgeColor} backdrop-blur-sm group-hover:scale-105 transition-transform`}>
-                        {announcement.badge}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
-                      {announcement.title}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
-                      <MdCalendarToday className="text-amber-400" />
-                      <span>{announcement.date}</span>
-                    </div>
-                    <p className="text-gray-300 text-sm leading-relaxed">
-                      {announcement.description}
-                    </p>
-                    <div className="mt-4 pt-3 border-t border-white/10">
-                      <button className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 group/btn">
-                        Read more
-                        <svg className="w-3 h-3 transform group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-gray-600 rounded"></div>
+                        <div className="h-3 bg-gray-600 rounded"></div>
+                        <div className="h-3 bg-gray-600 rounded w-3/4"></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                announcements.map((announcement, index) => (
+                  <div
+                    key={announcement.id}
+                    className="group bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:bg-white/10 cursor-pointer animate-fadeInUp"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className={`h-1.5 bg-gradient-to-r ${announcement.color} group-hover:h-2 transition-all duration-300`}></div>
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${announcement.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300 group-hover:rotate-3`}>
+                          {announcement.icon}
+                        </div>
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${announcement.badgeColor} backdrop-blur-sm group-hover:scale-105 transition-transform`}>
+                          {announcement.badge}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
+                        {announcement.title}
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
+                        <MdCalendarToday className="text-amber-400" />
+                        <span>{announcement.date}</span>
+                      </div>
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        {announcement.description}
+                      </p>
+                      <div className="mt-4 pt-3 border-t border-white/10">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => {
+                              setSelectedAnnouncement(announcement);
+                              setShowModal(true);
+                            }}
+                            className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 group/btn"
+                          >
+                            Read more
+                            <svg className="w-3 h-3 transform group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                          
+                          {/* Apply button for job announcements */}
+                          {announcement.type === 'job' && (
+                            <button 
+                              onClick={() => {
+                                setSelectedAnnouncement(announcement);
+                                setShowModal(true);
+                                // Auto-focus on form when opened
+                                setTimeout(() => {
+                                  const formElement = document.querySelector('form');
+                                  if (formElement) {
+                                    formElement.scrollIntoView({ behavior: 'smooth' });
+                                    const firstInput = formElement.querySelector('input');
+                                    if (firstInput) firstInput.focus();
+                                  }
+                                }, 100);
+                              }}
+                              className="text-xs font-medium bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                            >
+                              Apply Now
+                              <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-4H4m8 0v16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="flex justify-center mt-8">
@@ -554,6 +669,7 @@ const Landing = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </button>
+              </div>
             </div>
           </div>
 
@@ -583,7 +699,144 @@ const Landing = () => {
             </div>
           </div>
         </div>
-      </div>
+
+      {/* Announcement Modal */}
+      {showModal && selectedAnnouncement && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl transform transition-all duration-300 scale-100">
+            <div className="relative">
+              {/* Close button */}
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 bg-white/90 rounded-full p-2 hover:bg-white"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Modal Header */}
+              <div className={`p-6 bg-gradient-to-r ${selectedAnnouncement.color} rounded-t-2xl`}>
+                <div className="flex items-center gap-3 text-white">
+                  <div className="text-2xl">{selectedAnnouncement.icon}</div>
+                  <div>
+                    <h3 className="text-xl font-bold">{selectedAnnouncement.title}</h3>
+                    <div className="flex items-center gap-2 text-sm opacity-90">
+                      <MdCalendarToday className="text-white" />
+                      <span>{selectedAnnouncement.date}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6">
+                <div className="prose max-w-none">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {selectedAnnouncement.description}
+                  </p>
+                </div>
+
+                {/* Job Application Form for job announcements */}
+                {selectedAnnouncement.type === 'job' && (
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="text-lg font-semibold text-blue-900 mb-4">Apply for this Position</h4>
+                    <form onSubmit={handleApplicationSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <input
+                          type="text"
+                          value={applicationForm.fullName}
+                          onChange={(e) => setApplicationForm({...applicationForm, fullName: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter your full name"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input
+                          type="email"
+                          value={applicationForm.email}
+                          onChange={(e) => setApplicationForm({...applicationForm, email: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="your.email@example.com"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                        <input
+                          type="tel"
+                          value={applicationForm.phone}
+                          onChange={(e) => setApplicationForm({...applicationForm, phone: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="+1 (555) 123-4567"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Cover Letter / CV</label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="file"
+                            onChange={(e) => setApplicationForm({...applicationForm, cvFile: e.target.files[0]})}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            accept=".pdf,.doc,.docx"
+                          />
+                          <button
+                            type="button"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Upload CV
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Additional Information</label>
+                        <textarea
+                          value={applicationForm.additionalInfo}
+                          onChange={(e) => setApplicationForm({...applicationForm, additionalInfo: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          rows={4}
+                          placeholder="Tell us why you're interested in this position..."
+                        ></textarea>
+                      </div>
+                      <div className="flex gap-4">
+                        <button
+                          type="submit"
+                          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                          Submit Application
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowModal(false)}
+                          className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Edit/Delete buttons for faculty/admin users only */}
+                {(userRole === 'faculty' || userRole === 'admin') && (
+                  <div className="mt-6 flex gap-4 justify-end">
+                    <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+                      Edit Announcement
+                    </button>
+                    <button className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors">
+                      Delete Announcement
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

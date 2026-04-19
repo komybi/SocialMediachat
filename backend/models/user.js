@@ -34,6 +34,10 @@ const userSchema = new mongoose.Schema(
 			enum: ["student", "admin", "faculty"],
 			default: "student",
 		},
+		department: {
+			type: String,
+			required: true,
+		},
 		lastLogin: {
 			type: Date,
 		},

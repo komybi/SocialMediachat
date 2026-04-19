@@ -9,9 +9,14 @@ const SignUp = () => {
 	const [lastName, setLastName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [role, setRole] = useState("user");
+	const [role, setRole] = useState("student");
+	const [department, setDepartment] = useState("");
 	const [load, setLoad] = useState("");
 	const [isShow, setIsShow] = useState(false);
+	const [showOTPModal, setShowOTPModal] = useState(false);
+	const [otp, setOTP] = useState("");
+	const [otpSent, setOtpSent] = useState(false);
+	const [tempUserData, setTempUserData] = useState(null);
 	const navigate = useNavigate();
 
 	const handleBackToHome = () => {
@@ -55,24 +60,100 @@ const SignUp = () => {
 			});
 	};
 
-	const handleSignup = (e) => {
-		if (firstName && lastName && email && password && role) {
-			const validError = checkValidSignUpFrom(
-				firstName,
-				lastName,
-				email,
-				password,
-				role
-			);
-			if (validError) {
-				toast.error(validError);
-				return;
+	const sendOTP = async (userData) => {
+		try {
+			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/send-otp`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ email: userData.email }),
+			});
+			
+			const result = await response.json();
+			
+			if (response.ok) {
+				setOtpSent(true);
+				setShowOTPModal(true);
+				toast.success("OTP sent to your institutional email");
+			} else {
+				toast.error(result.message || "Failed to send OTP");
 			}
-			setLoad("Loading...");
-			signUpUser(e);
-		} else {
-			toast.error("Required: All Fields");
+		} catch (error) {
+			console.error("Error sending OTP:", error);
+			toast.error("Failed to send OTP");
 		}
+	};
+
+	const verifyOTP = async () => {
+		try {
+			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/verify-otp`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ 
+					email: tempUserData.email, 
+					otp: otp,
+					userData: tempUserData
+				}),
+			});
+			
+			const result = await response.json();
+			
+			if (response.ok) {
+				toast.success("Account created successfully!");
+				setShowOTPModal(false);
+				setOTP("");
+				setTempUserData(null);
+				navigate("/signin");
+			} else {
+				toast.error(result.message || "Invalid OTP");
+			}
+		} catch (error) {
+			console.error("Error verifying OTP:", error);
+			toast.error("Failed to verify OTP");
+		}
+	};
+
+	const handleSignup = (e) => {
+		// Validate all fields including department
+		if (!firstName || !lastName || !email || !password || !role || !department) {
+			toast.error("Required: All Fields including Department");
+			return;
+		}
+
+		// Validate institutional email
+		if (!email.endsWith("@bhu.edu.et")) {
+			toast.error("Email must end with @bhu.edu.et");
+			return;
+		}
+
+		const validError = checkValidSignUpFrom(
+			firstName,
+			lastName,
+			email,
+			password,
+			role
+		);
+		if (validError) {
+			toast.error(validError);
+			return;
+		}
+
+		// Store user data temporarily and send OTP
+		const userData = {
+			firstName,
+			lastName,
+			email,
+			password,
+			role,
+			department
+		};
+		
+		setTempUserData(userData);
+		setLoad("Loading...");
+		sendOTP(userData);
 	};
 
 	return (
@@ -192,10 +273,29 @@ const SignUp = () => {
 										value={role}
 										onChange={(e) => setRole(e.target.value)}
 									>
-										<option value="user" className="bg-slate-800">student</option>
+										<option value="student" className="bg-slate-800">Student</option>
 										<option value="admin" className="bg-slate-800">Admin</option>
-										<option value="moderator" className="bg-slate-800">faculty</option>
+										<option value="faculty" className="bg-slate-800">Faculty</option>
 									</select>
+								</div>
+
+								{/* Department */}
+								<div className="space-y-2 group">
+									<label className="text-sm font-medium text-slate-300 flex items-center gap-2 transition-colors duration-200 group-focus-within:text-blue-300">
+										<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+										</svg>
+										Department
+									</label>
+									<input
+										className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/10"
+										type="text"
+										placeholder="Enter your department"
+										name="department"
+										value={department}
+										onChange={(e) => setDepartment(e.target.value)}
+										required
+									/>
 								</div>
 
 								{/* Email */}
@@ -204,17 +304,18 @@ const SignUp = () => {
 										<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
 										</svg>
-										Email Address
+										Institutional Email Address
 									</label>
 									<input
 										className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/10"
 										type="email"
-										placeholder="Enter Email Address"
+										placeholder="komarsan.berhanu@bhu.edu.et"
 										name="email"
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
 										required
 									/>
+									<p className="text-xs text-slate-400 mt-1">Must end with @bhu.edu.et</p>
 								</div>
 
 								{/* Password */}
@@ -308,61 +409,141 @@ const SignUp = () => {
 							</div>
 						</div>
 					</div>
+
+					{/* OTP Verification Modal */}
+					{showOTPModal && (
+						<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+							<div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+								<div className="flex justify-between items-center p-6 border-b">
+									<h3 className="text-xl font-bold text-gray-800">Verify Email</h3>
+									<button
+										onClick={() => {
+											setShowOTPModal(false);
+											setOTP("");
+											setTempUserData(null);
+											setLoad("");
+										}}
+										className="text-gray-500 hover:text-gray-700 transition-colors"
+									>
+										<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+										</svg>
+									</button>
+								</div>
+								<div className="p-6 space-y-4">
+									<div className="text-center">
+										<div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+											<svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+											</svg>
+										</div>
+										<h4 className="text-lg font-semibold text-gray-800 mb-2">Check your email</h4>
+										<p className="text-gray-600 text-sm mb-4">
+											We've sent a verification code to<br />
+											<span className="font-medium text-blue-600">{tempUserData?.email}</span>
+										</p>
+									</div>
+									
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-2">Enter OTP Code</label>
+										<input
+											type="text"
+											value={otp}
+											onChange={(e) => setOTP(e.target.value)}
+											placeholder="Enter 6-digit code"
+											className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg font-mono"
+											maxLength={6}
+										/>
+									</div>
+									
+									<div className="flex gap-3">
+										<button
+											onClick={() => {
+												setShowOTPModal(false);
+												setOTP("");
+												setTempUserData(null);
+												setLoad("");
+											}}
+											className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+										>
+											Cancel
+										</button>
+										<button
+											onClick={verifyOTP}
+											disabled={otp.length !== 6}
+											className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+										>
+											Verify
+										</button>
+									</div>
+									
+									<div className="text-center pt-2">
+										<button
+											onClick={() => sendOTP(tempUserData)}
+											className="text-sm text-blue-600 hover:text-blue-700 transition"
+										>
+											Resend OTP
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
+
+					<style>{`
+						@keyframes float-slow {
+							0%, 100% { transform: translate(0, 0) scale(1); }
+							50% { transform: translate(20px, -20px) scale(1.05); }
+						}
+						@keyframes float-medium {
+							0%, 100% { transform: translate(0, 0) scale(1); }
+							50% { transform: translate(-20px, 20px) scale(1.1); }
+						}
+						@keyframes float-fast {
+							0%, 100% { transform: translate(0, 0) scale(1); }
+							50% { transform: translate(15px, 15px) scale(1.08); }
+						}
+						@keyframes pulse-slow {
+							0%, 100% { opacity: 0.2; transform: scale(1); }
+							50% { opacity: 0.4; transform: scale(1.05); }
+						}
+						@keyframes particle {
+							0% { transform: translateY(0) translateX(0); opacity: 0; }
+							10% { opacity: 0.5; }
+							90% { opacity: 0.5; }
+							100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+						}
+						@keyframes fadeInUp {
+							from {
+								opacity: 0;
+								transform: translateY(30px);
+							}
+							to {
+								opacity: 1;
+								transform: translateY(0);
+							}
+						}
+						.animate-float-slow {
+							animation: float-slow 12s ease-in-out infinite;
+						}
+						.animate-float-medium {
+							animation: float-medium 8s ease-in-out infinite;
+						}
+						.animate-float-fast {
+							animation: float-fast 6s ease-in-out infinite;
+						}
+						.animate-pulse-slow {
+							animation: pulse-slow 8s ease-in-out infinite;
+						}
+						.animate-particle {
+							animation: particle linear infinite;
+						}
+						.animate-fadeInUp {
+							animation: fadeInUp 0.8s ease-out;
+						}
+					`}</style>
 				</div>
 			</div>
-
-			<style>{`
-				@keyframes float-slow {
-					0%, 100% { transform: translate(0, 0) scale(1); }
-					50% { transform: translate(20px, -20px) scale(1.05); }
-				}
-				@keyframes float-medium {
-					0%, 100% { transform: translate(0, 0) scale(1); }
-					50% { transform: translate(-20px, 20px) scale(1.1); }
-				}
-				@keyframes float-fast {
-					0%, 100% { transform: translate(0, 0) scale(1); }
-					50% { transform: translate(15px, 15px) scale(1.08); }
-				}
-				@keyframes pulse-slow {
-					0%, 100% { opacity: 0.2; transform: scale(1); }
-					50% { opacity: 0.4; transform: scale(1.05); }
-				}
-				@keyframes particle {
-					0% { transform: translateY(0) translateX(0); opacity: 0; }
-					10% { opacity: 0.5; }
-					90% { opacity: 0.5; }
-					100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
-				}
-				@keyframes fadeInUp {
-					from {
-						opacity: 0;
-						transform: translateY(30px);
-					}
-					to {
-						opacity: 1;
-						transform: translateY(0);
-					}
-				}
-				.animate-float-slow {
-					animation: float-slow 12s ease-in-out infinite;
-				}
-				.animate-float-medium {
-					animation: float-medium 8s ease-in-out infinite;
-				}
-				.animate-float-fast {
-					animation: float-fast 6s ease-in-out infinite;
-				}
-				.animate-pulse-slow {
-					animation: pulse-slow 8s ease-in-out infinite;
-				}
-				.animate-particle {
-					animation: particle linear infinite;
-				}
-				.animate-fadeInUp {
-					animation: fadeInUp 0.8s ease-out;
-				}
-			`}</style>
 		</div>
 	);
 };

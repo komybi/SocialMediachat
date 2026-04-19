@@ -53,6 +53,9 @@ const { authorization } = require("../middlewares/authorization");
 const wrapAsync = require("../middlewares/wrapAsync");
 
 // Routes
+// Public route for landing page (no authorization required)
+router.get("/public", wrapAsync(announcementController.getPublicAnnouncements));
+// Protected routes
 router.get("/", authorization, wrapAsync(announcementController.getAllAnnouncements));
 router.get("/:id", authorization, wrapAsync(announcementController.getAnnouncement));
 router.post("/", 

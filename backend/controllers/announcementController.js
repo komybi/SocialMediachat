@@ -102,6 +102,36 @@ exports.createAnnouncement = async (req, res) => {
   }
 };
 
+// Get public announcements for landing page (no authorization required)
+exports.getPublicAnnouncements = async (req, res) => {
+  try {
+    console.log('getPublicAnnouncements called');
+    const { limit = 8 } = req.query; // Limit to 8 for landing page cards
+    let filter = { 
+      isActive: true,
+      visibility: "public"
+    };
+    console.log('Filter:', JSON.stringify(filter));
+
+    const announcements = await Announcement.find(filter)
+      .sort({ priority: -1, createdAt: -1 }) // high priority first, then newest
+      .limit(parseInt(limit))
+      .populate("author", "firstName lastName email")
+      .select("title content priority createdAt author");
+
+    res.status(200).json({
+      success: true,
+      data: announcements,
+    });
+  } catch (error) {
+    console.error("Get public announcements error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // Get all announcements (with filters)
 exports.getAllAnnouncements = async (req, res) => {
   try {
@@ -113,7 +143,7 @@ exports.getAllAnnouncements = async (req, res) => {
     if (audience) filter.targetAudience = { $in: [audience] };
 
     // Optional: only show public announcements to non-authenticated users,
-    // but here we assume the route is protected by authorization.
+    // but here we assume route is protected by authorization.
     // You can add role‑based filtering if needed.
 
     const announcements = await Announcement.find(filter)

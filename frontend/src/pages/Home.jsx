@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { MdChat, MdPeople, MdAnnouncement, MdAttachFile } from "react-icons/md";
+import { MdChat, MdPeople, MdAttachFile } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import UserSearch from "../components/chatComponents/UserSearch";
@@ -7,7 +7,6 @@ import MyChat from "../components/chatComponents/MyChat";
 import MessageBox from "../components/messageComponents/MessageBox";
 import ChatNotSelected from "../components/chatComponents/ChatNotSelected";
 import UserSuggestions from "../components/UserSuggestions";
-import AnnouncementCreate from "../components/AnnouncementCreate";
 import FileUploadTest from "../components/FileUploadTest";
 import {
   setChatDetailsBox,
@@ -35,8 +34,6 @@ const Home = () => {
   const isUserSearchBox = useSelector((store) => store?.condition?.isUserSearchBox);
   const isUserSuggestionsBox = useSelector((store) => store?.condition?.isUserSuggestionsBox);
   const authUserId = useSelector((store) => store?.auth?._id);
-  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
-  const [publicAnnouncements, setPublicAnnouncements] = useState([]);
 
   // File send states - FIXED
   const [selectedFile, setSelectedFile] = useState(null);
@@ -44,22 +41,6 @@ const Home = () => {
   const [filePreviewUrl, setFilePreviewUrl] = useState(null);
   const [isSendingFile, setIsSendingFile] = useState(false);
   const fileInputRef = useRef(null);
-
-  // Fetch public announcements
-  useEffect(() => {
-    const fetchPublicAnnouncements = async () => {
-      try {
-        const response = await fetch(`http://localhost:9000/api/announcement?visibility=public`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        const result = await response.json();
-        if (result.success) setPublicAnnouncements(result.data);
-      } catch (error) {
-        console.error("Error fetching announcements:", error);
-      }
-    };
-    if (authUserId) fetchPublicAnnouncements();
-  }, [authUserId]);
 
   // Socket connection
   useEffect(() => {
@@ -177,7 +158,8 @@ const Home = () => {
       const data = await response.json();
       console.log('Success response:', data);
       
-      const messageContent = `📎 ${data.file.originalName}\n${data.file.url}`;
+      const messageContent = `📎 ${data.file.originalName}
+${data.file.url}`;
       
       console.log('Sending socket message...');
       
@@ -217,47 +199,6 @@ const Home = () => {
     <div className="w-full">
       {authUserId ? (
         <>
-          {/* Public Announcements Section */}
-          {publicAnnouncements.length > 0 && (
-            <div className="mb-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <MdAnnouncement className="text-amber-600" />
-                  Public Announcements ({publicAnnouncements.length})
-                </h3>
-                <button
-                  onClick={() => setShowAnnouncementModal(true)}
-                  className="px-3 py-1 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition text-sm"
-                >
-                  Create
-                </button>
-              </div>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {publicAnnouncements.map((announcement) => (
-                  <div key={announcement._id} className="bg-white rounded-md p-3 border border-amber-100">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-800 text-sm mb-1">{announcement.title}</h4>
-                        <p className="text-gray-600 text-xs line-clamp-2">{announcement.content}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            announcement.priority === 'high' ? 'bg-red-100 text-red-600' :
-                            announcement.priority === 'medium' ? 'bg-yellow-100 text-yellow-600' :
-                            'bg-green-100 text-green-600'
-                          }`}>
-                            {announcement.priority.toUpperCase()}
-                          </span>
-                          <span>By {announcement.author?.firstName} {announcement.author?.lastName}</span>
-                          <span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="flex w-full border-slate-500 border rounded-sm shadow-md shadow-black relative">
             {/* Left sidebar */}
             <div
@@ -366,17 +307,6 @@ const Home = () => {
             </Link>
           </div>
         </div>
-      )}
-
-      {/* Announcement Modal */}
-      {showAnnouncementModal && (
-        <AnnouncementCreate
-          onClose={() => setShowAnnouncementModal(false)}
-          onAnnouncementCreated={(newAnnouncement) => {
-            setPublicAnnouncements(prev => [newAnnouncement, ...prev]);
-            toast.success("Announcement created successfully!");
-          }}
-        />
       )}
     </div>
   );
