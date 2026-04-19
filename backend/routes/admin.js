@@ -15,6 +15,9 @@ router.get("/stats", wrapAsync(adminControllers.getPlatformStats));
 // Get all users
 router.get("/users", wrapAsync(adminControllers.getAllUsers));
 
+// Update user
+router.put("/users/:id", wrapAsync(adminControllers.updateUser));
+
 // Create test user (for testing only)
 router.post("/create-test-user", wrapAsync(async (req, res) => {
   try {
@@ -40,11 +43,20 @@ router.post("/create-test-user", wrapAsync(async (req, res) => {
 // Get all posts
 router.get("/posts", wrapAsync(adminControllers.getAllPosts));
 
+// Update post
+router.put("/posts/:id", wrapAsync(adminControllers.updatePost));
+
 // Get all reels
 router.get("/reels", wrapAsync(adminControllers.getAllReels));
 
+// Update reel
+router.put("/reels/:id", wrapAsync(adminControllers.updateReel));
+
 // Get all resources
 router.get("/resources", wrapAsync(adminControllers.getAllResources));
+
+// Update resource
+router.put("/resources/:id", wrapAsync(adminControllers.updateResource));
 
 // Get all chats
 router.get("/chats", wrapAsync(adminControllers.getAllChats));
@@ -57,6 +69,12 @@ router.delete("/posts/:id", wrapAsync(adminControllers.deletePost));
 
 // Delete reel
 router.delete("/reels/:id", wrapAsync(adminControllers.deleteReel));
+
+// Delete resource
+router.delete("/resources/:id", wrapAsync(adminControllers.deleteResource));
+
+// Delete chat
+router.delete("/chats/:id", wrapAsync(adminControllers.deleteChat));
 
 // Get reported content
 router.get("/reports", wrapAsync(adminControllers.getReportedContent));

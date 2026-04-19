@@ -144,7 +144,7 @@ const getAllUsers = async (req, res) => {
 const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find({})
-      .populate('author', 'firstName lastName email image')
+      .populate('user', 'firstName lastName email image')
       .populate('likes', 'firstName lastName')
       .populate('comments.user', 'firstName lastName')
       .sort({ createdAt: -1 });
@@ -163,10 +163,14 @@ const getAllPosts = async (req, res) => {
 
 const getAllReels = async (req, res) => {
   try {
+    console.log('Fetching reels from database...');
     const reels = await Reel.find({})
-      .populate('author', 'firstName lastName email image')
+      .populate('user', 'firstName lastName email image')
       .populate('likes', 'firstName lastName')
       .sort({ createdAt: -1 });
+    
+    console.log('Found reels:', reels.length);
+    console.log('Sample reel:', reels[0]);
     
     res.status(200).json({
       message: "Reels retrieved successfully",
@@ -228,6 +232,39 @@ const getAllChats = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Check if user exists
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    // Don't allow password update through this endpoint for security
+    delete updateData.password;
+    
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    res.status(200).json({
+      message: "User updated successfully",
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ 
+      message: "Error updating user" 
+    });
+  }
+};
+
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -264,6 +301,36 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const updatePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Check if post exists
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    // Update post
+    const updatedPost = await Post.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('author', 'firstName lastName email image');
+    
+    res.status(200).json({
+      message: "Post updated successfully",
+      data: updatedPost
+    });
+  } catch (error) {
+    console.error("Error updating post:", error);
+    res.status(500).json({ 
+      message: "Error updating post" 
+    });
+  }
+};
+
 const deletePost = async (req, res) => {
   try {
     const { id } = req.params;
@@ -280,6 +347,36 @@ const deletePost = async (req, res) => {
     console.error("Error deleting post:", error);
     res.status(500).json({ 
       message: "Error deleting post" 
+    });
+  }
+};
+
+const updateReel = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Check if reel exists
+    const reel = await Reel.findById(id);
+    if (!reel) {
+      return res.status(404).json({ message: "Reel not found" });
+    }
+    
+    // Update reel
+    const updatedReel = await Reel.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('author', 'firstName lastName email image');
+    
+    res.status(200).json({
+      message: "Reel updated successfully",
+      data: updatedReel
+    });
+  } catch (error) {
+    console.error("Error updating reel:", error);
+    res.status(500).json({ 
+      message: "Error updating reel" 
     });
   }
 };
@@ -304,6 +401,80 @@ const deleteReel = async (req, res) => {
   }
 };
 
+const updateResource = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Check if resource exists
+    const resource = await Resource.findById(id);
+    if (!resource) {
+      return res.status(404).json({ message: "Resource not found" });
+    }
+    
+    // Update resource
+    const updatedResource = await Resource.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('facultyId', 'firstName lastName email');
+    
+    res.status(200).json({
+      message: "Resource updated successfully",
+      data: updatedResource
+    });
+  } catch (error) {
+    console.error("Error updating resource:", error);
+    res.status(500).json({ 
+      message: "Error updating resource" 
+    });
+  }
+};
+
+const deleteResource = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const resource = await Resource.findByIdAndDelete(id);
+    if (!resource) {
+      return res.status(404).json({ message: "Resource not found" });
+    }
+    
+    res.status(200).json({
+      message: "Resource deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting resource:", error);
+    res.status(500).json({ 
+      message: "Error deleting resource" 
+    });
+  }
+};
+
+const deleteChat = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Delete all messages in the chat first
+    await Message.deleteMany({ chat: id });
+    
+    // Delete the chat
+    const chat = await Chat.findByIdAndDelete(id);
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+    
+    res.status(200).json({
+      message: "Chat and all messages deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting chat:", error);
+    res.status(500).json({ 
+      message: "Error deleting chat" 
+    });
+  }
+};
+
 module.exports = {
   getPlatformStats,
   getReportedContent,
@@ -313,7 +484,13 @@ module.exports = {
   getAllReels,
   getAllResources,
   getAllChats,
+  updateUser,
+  updatePost,
+  updateReel,
+  updateResource,
   deleteUser,
   deletePost,
-  deleteReel
+  deleteReel,
+  deleteResource,
+  deleteChat
 };

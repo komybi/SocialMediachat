@@ -73,6 +73,45 @@ const followUser = async (req, res) => {
 	currentUser.following.push(userId);
 	await currentUser.save();
 
+	// Create notification for the user being followed
+	const Notification = require("../models/notification");
+	const notification = new Notification({
+		recipient: userId,
+		sender: currentUser._id,
+		type: 'follow',
+		message: `${currentUser.firstName} ${currentUser.lastName} started following you`,
+		relatedUser: currentUser._id,
+	});
+	await notification.save();
+
+	// Emit socket event to the user being followed
+	const reqSocket = req.app.get('socketio');
+	console.log('🔌 Socket available in follow controller:', !!reqSocket);
+	console.log('🎯 Emitting notification to user:', userId);
+	
+	if (reqSocket) {
+		const notificationData = {
+			_id: notification._id,
+			sender: {
+				_id: currentUser._id,
+				firstName: currentUser.firstName,
+				lastName: currentUser.lastName,
+				email: currentUser.email,
+				image: currentUser.image
+			},
+			type: 'follow',
+			message: `${currentUser.firstName} ${currentUser.lastName} started following you`,
+			createdAt: notification.createdAt,
+			relatedUser: currentUser._id,
+		};
+		
+		console.log('📤 Emitting notification data:', notificationData);
+		reqSocket.to(userId).emit('newNotification', notificationData);
+		console.log('✅ Notification emitted successfully');
+	} else {
+		console.log('❌ Socket not available in follow controller');
+	}
+
 	res.status(200).json({ message: "Followed successfully" });
 };
 

@@ -35,6 +35,7 @@ const PORT = process.env.PORT || 3000;
 
 // All routers
 const authRouter = require("./routes/auth");
+const auth2Router = require("./routes/auth2");
 const userRouter = require("./routes/user");
 const chatRouter = require("./routes/chat");
 const messageRouter = require("./routes/message");
@@ -42,6 +43,8 @@ const postRouter = require("./routes/post");
 const reelRouter = require("./routes/reel");
 const adminRouter = require("./routes/admin");
 const announcementRouter = require("./routes/announcement");
+const notificationRouter = require("./routes/notification");
+const jobApplicationRouter = require("./routes/jobApplication");
 
 // Connect to Database and start server
 const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/chat-app";
@@ -66,12 +69,18 @@ async function startServer() {
 			io.on("connection", (socket) => {
 				console.log("Connected to socket.io:", socket.id);
 
+				// Store socket instance in app for controllers to access
+				app.set('socketio', io);
+
 				const setupHandler = (userId) => {
 					if (!socket.hasJoined) {
 						socket.join(userId);
 						socket.hasJoined = true;
-						console.log("User joined:", userId);
+						console.log("👤 User joined socket room:", userId);
+						console.log("📡 Socket rooms:", socket.rooms);
 						socket.emit("connected");
+					} else {
+						console.log("🔄 User already joined:", userId);
 					}
 				};
 
@@ -176,6 +185,7 @@ app.get("/", (req, res) => {
 
 // All routes
 app.use("/api/auth", authRouter);
+app.use("/api/auth2", auth2Router);
 app.use("/api/user", userRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/message", messageRouter);
@@ -183,6 +193,7 @@ app.use("/api/post", postRouter);
 app.use("/api/reel", reelRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/announcement", announcementRouter);
+app.use("/api/notification", notificationRouter);
 app.use("/api/job-application", require("./routes/jobApplication"));
 
 // Invalid routes

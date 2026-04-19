@@ -16,7 +16,7 @@ import store from "./redux/store";
 import ProfileDetail from "./components/ProfileDetail";
 import Loading from "./components/loading/Loading";
 import GroupChatBox from "./components/chatComponents/GroupChatBox";
-import NotificationBox from "./components/NotificationBox";
+import EnhancedNotificationBox from "./components/EnhancedNotificationBox";
 import Reels from "./pages/Reels";
 import FacultyResources from "./components/FacultyResources";
 // Import the new dashboards
@@ -75,7 +75,7 @@ const Applayout = () => {
                 <Outlet />
                 {isProfileDetails && <ProfileDetail />}
                 {isGroupChatBox && <GroupChatBox />}
-                {isNotificationBox && <NotificationBox />}
+                {isNotificationBox && <EnhancedNotificationBox />}
             </div>
             {isLoading && <Loading />}
             <Footer />
