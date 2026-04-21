@@ -114,6 +114,7 @@ const CreateReel = ({ onReelCreated }) => {
                                     src={preview}
                                     controls
                                     className="w-full max-h-64 object-cover rounded-lg"
+                                    muted={false}
                                 />
                                 <button
                                     type="button"

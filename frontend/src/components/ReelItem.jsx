@@ -46,6 +46,12 @@ const ReelItem = ({ reel, onUpdate }) => {
 	}, []);
 
 	const handleLike = async () => {
+		// Pause video when like is clicked
+		if (videoRef.current && isPlaying) {
+			videoRef.current.pause();
+			setIsPlaying(false);
+		}
+		
 		try {
 			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reel/${reel._id}/like`, {
 				method: "POST",
@@ -147,7 +153,6 @@ const ReelItem = ({ reel, onUpdate }) => {
 					src={reel.video.url}
 					className="w-full h-full object-cover"
 					loop
-					muted
 					playsInline
 					autoPlay
 					onClick={togglePlayPause}
